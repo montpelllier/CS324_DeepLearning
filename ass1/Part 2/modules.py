@@ -1,11 +1,12 @@
 import numpy as np
 
+
 class Linear(object):
     def __init__(self, in_features, out_features):
         """
         Module initialisation.
         Args:
-            in_features: input dimension
+            in_features: input_data dimension
             out_features: output dimension
         TODO:
         1) Initialize weights self.params['weight'] using normal distribution with mean = 0 and 
@@ -13,12 +14,18 @@ class Linear(object):
         2) Initialize biases self.params['bias'] with 0. 
         3) Initialize gradients with zeros.
         """
-        
+        self.in_features = in_features
+        self.out_features = out_features
+
+        self.params = {'weight': np.random.randn(in_features, out_features) * 0.0001,
+                       'bias': np.zeros(self.out_features)}
+        self.gradients = 0
+
     def forward(self, x):
         """
-        Forward pass (i.e., compute output from input).
+        Forward pass (i.e., compute output from input_data).
         Args:
-            x: input to the module
+            x: input_data to the module
         Returns:
             out: output of the module
         Hint: Similarly to pytorch, you can store the computed values inside the object
@@ -32,22 +39,24 @@ class Linear(object):
         Args:
             dout: gradients of the previous module
         Returns:
-            dx: gradients with respect to the input of the module
+            dx: gradients with respect to the input_data of the module
         TODO:
         Implement backward pass of the module. Store gradient of the loss with respect to 
         layer parameters in self.grads['weight'] and self.grads['bias']. 
         """
         return dx
 
+
 class ReLU(object):
     def forward(self, x):
         """
         Forward pass.
         Args:
-            x: input to the module
+            x: input_data to the module
         Returns:
             out: output of the module
         """
+
         return out
 
     def backward(self, dout):
@@ -56,16 +65,17 @@ class ReLU(object):
         Args:
             dout: gradients of the previous module
         Returns:
-            dx: gradients with respect to the input of the module
+            dx: gradients with respect to the input_data of the module
         """
         return dx
+
 
 class SoftMax(object):
     def forward(self, x):
         """
         Forward pass.
         Args:
-            x: input to the module
+            x: input_data to the module
         Returns:
             out: output of the module
     
@@ -83,17 +93,18 @@ class SoftMax(object):
         Args:
             dout: gradients of the previous module
         Returns:
-            dx: gradients with respect to the input of the module
+            dx: gradients with respect to the input_data of the module
         """
         return dx
+
 
 class CrossEntropy(object):
     def forward(self, x, y):
         """
         Forward pass.
         Args:
-            x: input to the module
-            y: labels of the input
+            x: input_data to the module
+            y: labels of the input_data
         Returns:
             out: cross entropy loss
         """
@@ -103,9 +114,9 @@ class CrossEntropy(object):
         """
         Backward pass.
         Args:
-            x: input to the module
-            y: labels of the input
+            x: input_data to the module
+            y: labels of the input_data
         Returns:
-            dx: gradient of the loss with respect to the input x.
+            dx: gradient of the loss with respect to the input_data x.
         """
         return dx
