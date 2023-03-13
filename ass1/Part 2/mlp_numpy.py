@@ -19,7 +19,6 @@ class MLP(object):
         self.fc1 = Linear(n_inputs, n_hidden)
         self.fc2 = Linear(n_hidden, n_classes)
 
-
     def forward(self, x):
         """
         Predict network output from input_data by passing it through several layers.
@@ -28,6 +27,7 @@ class MLP(object):
         Returns:
             out: output of the network
         """
+
         x = self.activation(self.fc1(x))
         out = self.fc2(x)
         return out
