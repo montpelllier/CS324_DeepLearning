@@ -3,8 +3,13 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+
+import matplotlib.pyplot as plt
 import numpy as np
 import os
+
+from sklearn.datasets import make_moons
+
 from mlp_numpy import MLP
 from modules import CrossEntropy
 
@@ -16,6 +21,16 @@ EVAL_FREQ_DEFAULT = 10
 
 FLAGS = None
 
+
+def oneHot(labels, dim=None):
+    if dim is None:
+        dim = np.max(labels)+1
+    res = np.zeros((len(labels), dim))
+    for i, label in enumerate(labels):
+        res[i, label] = 1
+    return res
+
+
 def accuracy(predictions, targets):
     """
     Computes the prediction accuracy, i.e., the average of correct predictions
@@ -26,7 +41,9 @@ def accuracy(predictions, targets):
     Returns:
         accuracy: scalar float, the accuracy of predictions.
     """
+
     return accuracy
+
 
 def train():
     """
@@ -34,6 +51,32 @@ def train():
     NOTE: You should the model on the whole test set each eval_freq iterations.
     """
     # YOUR TRAINING CODE GOES HERE
+    args = parser.parse_args()
+    dim_hidden = list(map(int, args.dnn_hidden_units.split(',')))
+    freq = args.eval_freq
+    lr = args.learning_rate
+    max_step = args.max_steps
+    size = 1000
+    data, label = make_moons(n_samples=size, noise=0.05)
+    # plt.scatter(data[:, 0], data[:, 1], s=10, c=label)
+    # plt.show()
+    bound = int(0.8 * size)
+    train_data, test_data = data[:bound], data[bound:]
+    train_label, test_label = oneHot(label[:bound]), oneHot(label[bound:])
+    train_data, test_data = np.array(train_data), np.array(test_data)
+
+    # print(len(train_label))
+    # print(len(test_label))
+
+    module = MLP(n_inputs=2, n_hidden=dim_hidden, n_classes=2)
+
+    for t in range(max_step):
+        pred = module.forward(train_data)
+        loss = module.loss_fc(pred, train_label)
+        print("In round {}, the loss is {}.".format(t, loss))
+        grad = module.loss_fc.backward(pred, train_label)
+        delta = module.backward(grad)
+        print(delta)
 
 
 def main():
@@ -42,16 +85,17 @@ def main():
     """
     train()
 
+
 if __name__ == '__main__':
     # Command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dnn_hidden_units', type = str, default = DNN_HIDDEN_UNITS_DEFAULT,
-                      help='Comma separated list of number of units in each hidden layer')
-    parser.add_argument('--learning_rate', type = float, default = LEARNING_RATE_DEFAULT,
-                      help='Learning rate')
-    parser.add_argument('--max_steps', type = int, default = MAX_EPOCHS_DEFAULT,
-                      help='Number of epochs to run trainer.')
+    parser.add_argument('--dnn_hidden_units', type=str, default=DNN_HIDDEN_UNITS_DEFAULT,
+                        help='Comma separated list of number of units in each hidden layer')
+    parser.add_argument('--learning_rate', type=float, default=LEARNING_RATE_DEFAULT,
+                        help='Learning rate')
+    parser.add_argument('--max_steps', type=int, default=MAX_EPOCHS_DEFAULT,
+                        help='Number of epochs to run trainer.')
     parser.add_argument('--eval_freq', type=int, default=EVAL_FREQ_DEFAULT,
-                          help='Frequency of evaluation on the test set')
+                        help='Frequency of evaluation on the test set')
     FLAGS, unparsed = parser.parse_known_args()
     main()

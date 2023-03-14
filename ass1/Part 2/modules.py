@@ -100,7 +100,6 @@ class SoftMax(object):
             x: input_data to the module
         Returns:
             out: output of the module
-    
         TODO:
         Implement forward pass of the module. 
         To stabilize computation you should use the so-called Max Trick
@@ -122,6 +121,8 @@ class SoftMax(object):
         """
         n = dout.shape[0]
         dx = self.x.copy()
+        print(dx)
+        print(n)
         dx[range(n), list(dout)] -= 1
         dx /= n
         return dx
@@ -140,7 +141,8 @@ class CrossEntropy(object):
         Returns:
             out: cross entropy loss
         """
-        out = np.sum(-y * np.log(x))
+        # print(np.log(x))
+        out = np.sum(np.dot(y.transpose(), np.log(x)))
         return out
 
     def backward(self, x, y):
@@ -152,7 +154,7 @@ class CrossEntropy(object):
         Returns:
             dx: gradient of the loss with respect to the input_data x.
         """
-        dx = y / x
+        dx = y - x
         return dx
 
     __call__ = forward

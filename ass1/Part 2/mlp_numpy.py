@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import numpy as np
+
 from modules import *
 
 
@@ -16,8 +18,12 @@ class MLP(object):
             n_classes: number of classes of the classification problem (i.e., output dimension of the network)
         """
         self.activation = ReLU()
+        self.loss_fc = CrossEntropy()
+        # self.loss = CrossEntropy()
+        n_hidden = n_hidden[0]
         self.fc1 = Linear(n_inputs, n_hidden)
         self.fc2 = Linear(n_hidden, n_classes)
+        self.softmax = SoftMax()
 
     def forward(self, x):
         """
@@ -27,9 +33,8 @@ class MLP(object):
         Returns:
             out: output of the network
         """
-
         x = self.activation(self.fc1(x))
-        out = self.fc2(x)
+        out = self.softmax(self.fc2(x))
         return out
 
     def backward(self, dout):
@@ -38,5 +43,8 @@ class MLP(object):
         Args:
             dout: gradients of the loss
         """
-
-        return CrossEntropy(dout)
+        dx = self.softmax.backward(dout)
+        dx = self.fc2.backward(dx)
+        dx = self.activation.backward(dx)
+        dx = self.fc1.backward(dx)
+        return dx
