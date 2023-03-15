@@ -15,21 +15,32 @@ class MLP(object):
             n_hidden: list of integers, where each integer is the number of units in each linear layer
             n_classes: number of classes of the classification problem (i.e., output dimension of the network)
         """
-        self.activation = ReLU()
+        # self.activation = ReLU()
         self.loss_fc = CrossEntropy()
-        n_hidden = n_hidden[0]
         self.layers = []
-        # for i in range(len(n_hidden)):
-        #     self.layers.append(Linear())
-        self.fc1 = Linear(n_inputs, n_hidden)
-        self.fc2 = Linear(n_hidden, n_classes)
+        for i in range(len(n_hidden)):
+            if i == 0:
+                self.layers.append(Linear(n_inputs, n_hidden[i]))
+            else:
+                self.layers.append(Linear(n_hidden[i-1], n_hidden[i]))
+            self.layers.append(ReLU())
+        self.layers.append(Linear(n_hidden[-1], n_classes))
+        # for layer in self.layers:
+        #     print(layer.in_features, layer.out_features)
         self.softmax = SoftMax()
 
     def predict(self, x):
         flag = False
-        x = self.activation.forward(self.fc1.forward(x, flag), flag)
-        x = self.fc2(x, flag)
-        out = self.softmax(x)
+        # x = self.activation.forward(self.fc1.forward(x, flag), flag)
+        # x = self.fc2(x, flag)
+        # out = self.softmax(x)
+        out = x
+        for i in range(len(self.layers)):
+            out = self.layers[i](out, flag)
+            # if i != len(self.layers) - 1:
+            #     out = self.activation(out, flag)
+            # else:
+        out = self.softmax(out)
         return out
 
     def forward(self, x):
@@ -40,11 +51,16 @@ class MLP(object):
         Returns:
             out: output of the network
         """
-        x = self.activation(self.fc1(x))
-        # print("first layer:", x)
-        x = self.fc2(x)
-        # print("second layer:", x)
-        out = self.softmax(x)
+        out = x
+        for i in range(len(self.layers)):
+            out = self.layers[i](out)
+            # if i != len(self.layers)-1:
+            #     out = self.activation(out)
+            # else:
+            out = self.softmax(out)
+        # x = self.activation(self.fc1(x))
+        # x = self.fc2(x)
+        # out = self.softmax(x)
         return out
 
     def backward(self, dout):
@@ -54,9 +70,13 @@ class MLP(object):
             dout: gradients of the loss
         """
         # dx = self.softmax.backward(dout)
-        dx = self.fc2.backward(dout)
-        dx = self.activation.backward(dx)
-        dx = self.fc1.backward(dx)
+        dx = self.layers[-1].backward(dout)
+        for i in range(len(self.layers)-2, -1, -1):
+            # dx = self.activation.backward(dx)
+            dx = self.layers[i].backward(dx)
+        # dx = self.fc2.backward(dout)
+        # dx = self.activation.backward(dx)
+        # dx = self.fc1.backward(dx)
         return dx
 
     __call__ = forward

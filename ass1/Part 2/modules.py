@@ -56,6 +56,10 @@ class Linear(object):
         dx = np.dot(dout, self.params['weight'].transpose())
         return dx
 
+    def update(self, lr):
+        self.params['weight'] -= lr * self.grads['weight']
+        self.params['bias'] -= lr * self.grads['bias']
+
     __call__ = forward
 
 
@@ -84,11 +88,13 @@ class ReLU(object):
         Returns:
             dx: gradients with respect to the input_data of the module
         """
-        dx = dout
         self.out[self.out > 0] = 1
         self.out[self.out <= 0] = 0
         dx = dout * self.out
         return dx
+
+    def update(self, lr):
+        pass
 
     __call__ = forward
 

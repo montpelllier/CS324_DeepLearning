@@ -28,13 +28,6 @@ def oneHot(labels, dim=None):
     return res
 
 
-def update(module: MLP, lr):
-    module.fc1.params['weight'] -= lr * module.fc1.grads['weight']
-    module.fc2.params['weight'] -= lr * module.fc2.grads['weight']
-    module.fc1.params['bias'] -= lr * module.fc1.grads['bias']
-    module.fc2.params['bias'] -= lr * module.fc2.grads['bias']
-
-
 def accuracy(predictions, labels):
     """
     Computes the prediction accuracy, i.e., the average of correct predictions
@@ -93,7 +86,9 @@ def train():
 
         grad = module.loss_fc.backward(pred, train_label)
         module.backward(grad)
-        update(module, lr)
+
+        for layer in module.layers:
+            layer.update(lr)
 
     plt.figure()
     plt.plot(l, 'b-')
