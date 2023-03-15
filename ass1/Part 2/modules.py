@@ -1,6 +1,4 @@
 import numpy as np
-import torch
-from numpy import nan
 
 
 class Linear(object):
@@ -25,7 +23,7 @@ class Linear(object):
         self.grads = {'weight': np.random.randn(in_features, out_features) * 0.0001,
                       'bias': np.zeros(self.out_features)}
 
-    def forward(self, x):
+    def forward(self, x, flag=True):
         """
         Forward pass (i.e., compute output from input_data).
         Args:
@@ -34,10 +32,11 @@ class Linear(object):
             out: output of the module
         Hint: Similarly to pytorch, you can store the computed values inside the object and use them in the backward
         pass computation. This is true for *all* forward methods of *all* modules in this class.
+        :param x:
+        :param flag:
         """
-        # torch.nn.Linear()
-        # torch.autograd.backward()
-        self.x = x
+        if flag:
+            self.x = x
         out = np.dot(x, self.params['weight']) + self.params['bias']
         return out
 
@@ -52,12 +51,8 @@ class Linear(object):
         Implement backward pass of the module. Store gradient of the loss with respect to layer parameters in
         self.grads['weight'] and self.grads['bias'].
         """
-        # print("dout: ", dout)
-        # print(self.grads['bias'].shape, self.x.shape)
         self.grads['weight'] = np.dot(self.x.transpose(), dout)
-        # print(self.grads['weight'].shape)
         self.grads['bias'] = np.mean(dout, axis=0)
-        # print(self.grads['bias'].shape)
         dx = np.dot(dout, self.params['weight'].transpose())
         return dx
 
@@ -66,9 +61,9 @@ class Linear(object):
 
 class ReLU(object):
     def __init__(self):
-        self.x = None
+        self.out = None
 
-    def forward(self, x):
+    def forward(self, x, flag=True):
         """
         Forward pass.
         Args:
@@ -76,10 +71,9 @@ class ReLU(object):
         Returns:
             out: output of the module
         """
-        self.x = x
         out = np.maximum(0, x)
-        # print("RELU", x)
-        # print("OUT", out)
+        if flag:
+            self.out = out
         return out
 
     def backward(self, dout):
@@ -91,9 +85,9 @@ class ReLU(object):
             dx: gradients with respect to the input_data of the module
         """
         dx = dout
-        dx[self.x > 0] = 1
-        dx[self.x <= 0] = 0
-        # print(np.sum(dx))
+        self.out[self.out > 0] = 1
+        self.out[self.out <= 0] = 0
+        dx = dout * self.out
         return dx
 
     __call__ = forward
@@ -117,25 +111,16 @@ class SoftMax(object):
         """
         # torch.nn.Softmax
         # print(np.max(x))
-        x -= np.max(x)
-        x = np.exp(x)
+        # print(x)
+        # x -= np.max(x)
+        # x = np.exp(x)
         # print(x)
         for i in range(len(x)):
-            # x[i] -= max(x[i])
-            # x[i] = np.exp(x[i])
+            x[i] -= max(x[i])
+            x[i] = np.exp(x[i])
             x[i] /= sum(x[i])
-            if sum(x[i]) is nan:
-                print(x[i])
-            # try:
-            #     x[i] /= sum(x[i])
-            # except Exception as e:
-            #     print(e)
-            #     print(x[i])
-            #     exit(0)
-
         self.x = x
         out = x
-        # print("out", out)
         return out
 
     def backward(self, dout):
@@ -167,8 +152,7 @@ class CrossEntropy(object):
             out: cross entropy loss
         """
         x += 1e-7
-        # print("log", np.log(x))
-        out = -np.sum(np.dot(y.transpose(), np.log(x)))
+        out = -np.sum(y * np.log(x))
         return out
 
     def backward(self, x, y):
@@ -180,10 +164,7 @@ class CrossEntropy(object):
         Returns:
             dx: gradient of the loss with respect to the input_data x.
         """
-        # x += 1e-6
-        # print(x)
-        dx = y - x
-        print("dx", dx)
+        dx = x - y
         return dx
 
     __call__ = forward

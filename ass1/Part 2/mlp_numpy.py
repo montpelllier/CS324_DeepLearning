@@ -2,8 +2,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import numpy as np
-
 from modules import *
 
 
@@ -27,6 +25,13 @@ class MLP(object):
         self.fc2 = Linear(n_hidden, n_classes)
         self.softmax = SoftMax()
 
+    def predict(self, x):
+        flag = False
+        x = self.activation.forward(self.fc1.forward(x, flag), flag)
+        x = self.fc2(x, flag)
+        out = self.softmax(x)
+        return out
+
     def forward(self, x):
         """
         Predict network output from input_data by passing it through several layers.
@@ -36,7 +41,10 @@ class MLP(object):
             out: output of the network
         """
         x = self.activation(self.fc1(x))
-        out = self.softmax(self.fc2(x))
+        # print("first layer:", x)
+        x = self.fc2(x)
+        # print("second layer:", x)
+        out = self.softmax(x)
         return out
 
     def backward(self, dout):
@@ -45,8 +53,8 @@ class MLP(object):
         Args:
             dout: gradients of the loss
         """
-        dx = self.softmax.backward(dout)
-        dx = self.fc2.backward(dx)
+        # dx = self.softmax.backward(dout)
+        dx = self.fc2.backward(dout)
         dx = self.activation.backward(dx)
         dx = self.fc1.backward(dx)
         return dx

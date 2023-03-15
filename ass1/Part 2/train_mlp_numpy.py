@@ -6,12 +6,9 @@ import argparse
 
 import matplotlib.pyplot as plt
 import numpy as np
-import os
-
 from sklearn.datasets import make_moons
 
 from mlp_numpy import MLP
-from modules import CrossEntropy
 
 # Default constants
 DNN_HIDDEN_UNITS_DEFAULT = '20'
@@ -32,7 +29,6 @@ def oneHot(labels, dim=None):
 
 
 def update(module: MLP, lr):
-
     module.fc1.params['weight'] -= lr * module.fc1.grads['weight']
     module.fc2.params['weight'] -= lr * module.fc2.grads['weight']
     module.fc1.params['bias'] -= lr * module.fc1.grads['bias']
@@ -49,15 +45,15 @@ def accuracy(predictions, labels):
     Returns:
         accuracy: scalar float, the accuracy of predictions.
     """
-    # correct = 0
-    # for i in range(len(predictions)):
-    #     for j in range(len(predictions[i])):
-    #         if predictions[i][j] == np.max(predictions[i]):
-    #             if labels[i][j] == 1:
-    #                 correct += 1
-    #             continue
-    # res = correct/len(predictions)
-    res = np.mean((np.argmax(predictions, axis=1) == labels))
+    correct = 0
+    for i in range(len(predictions)):
+        for j in range(len(predictions[i])):
+            if predictions[i][j] == np.max(predictions[i]):
+                if labels[i][j] == 1:
+                    correct += 1
+                continue
+    res = correct / len(predictions)
+    # res = np.mean((np.argmax(predictions, axis=1) == labels))
     return res
 
 
@@ -81,25 +77,31 @@ def train():
     train_label, test_label = oneHot(label[:bound]), oneHot(label[bound:])
     train_data, test_data = np.array(train_data), np.array(test_data)
 
-    # print(len(train_label))
-    # print(len(test_label))
-
     module = MLP(n_inputs=2, n_hidden=dim_hidden, n_classes=2)
-    # lr = 0.05
+    a, l = [], []
     for t in range(max_step):
         pred = module(train_data)
-        loss = module.loss_fc(pred, train_label)
         if t % freq == 0:
-            print(pred)
+            # print(pred)
             # print(train_label)
-            # print(module.fc1.params['weight'])
+            loss = module.loss_fc(pred, train_label)
+            acc = accuracy(module.predict(test_data), test_label)
             print("In round {}, the loss is {}.".format(t, loss))
-            # print(accuracy(module(test_data), test_label))
+            print("accuracy: ", acc)
+            l.append(loss)
+            a.append(acc)
+
         grad = module.loss_fc.backward(pred, train_label)
-        # print("grad", grad)
         module.backward(grad)
         update(module, lr)
-        # print(delta)
+
+    plt.figure()
+    plt.plot(l, 'b-')
+    plt.ylabel("loss function")
+    plt.figure()
+    plt.plot(a, 'b-')
+    plt.ylabel("accuracy")
+    plt.show()
 
 
 def main():
