@@ -1,4 +1,6 @@
 import numpy as np
+import torch
+from numpy import nan
 
 
 class Linear(object):
@@ -11,7 +13,7 @@ class Linear(object):
             out_features: output dimension
         TODO:
         1) Initialize weights self.params['weight'] using normal distribution with mean = 0 and std = 0.0001.
-        2) Initialize biases self.params['bias'] with 0. 
+        2) Initialize biases self.params['bias'] with 0.
         3) Initialize gradients with zeros.
         """
         self.x = None
@@ -50,9 +52,13 @@ class Linear(object):
         Implement backward pass of the module. Store gradient of the loss with respect to layer parameters in
         self.grads['weight'] and self.grads['bias'].
         """
-        self.grads['weight'] = np.dot(self.x, dout)
-        self.grads['bias'] = dout
-        dx = np.dot(dout, self.params['weight'])
+        # print("dout: ", dout)
+        # print(self.grads['bias'].shape, self.x.shape)
+        self.grads['weight'] = np.dot(self.x.transpose(), dout)
+        # print(self.grads['weight'].shape)
+        self.grads['bias'] = np.mean(dout, axis=0)
+        # print(self.grads['bias'].shape)
+        dx = np.dot(dout, self.params['weight'].transpose())
         return dx
 
     __call__ = forward
@@ -72,6 +78,8 @@ class ReLU(object):
         """
         self.x = x
         out = np.maximum(0, x)
+        # print("RELU", x)
+        # print("OUT", out)
         return out
 
     def backward(self, dout):
@@ -83,7 +91,9 @@ class ReLU(object):
             dx: gradients with respect to the input_data of the module
         """
         dx = dout
+        dx[self.x > 0] = 1
         dx[self.x <= 0] = 0
+        # print(np.sum(dx))
         return dx
 
     __call__ = forward
@@ -106,9 +116,26 @@ class SoftMax(object):
         https://timvieira.github.io/blog/post/2014/02/11/exp-normalize-trick/
         """
         # torch.nn.Softmax
-        shift_scores = x - np.max(x, axis=1).reshape(-1, 1)
-        self.x = np.exp(shift_scores) / np.sum(np.exp(shift_scores), axis=1).reshape(-1, 1)
-        out = self.x
+        # print(np.max(x))
+        x -= np.max(x)
+        x = np.exp(x)
+        # print(x)
+        for i in range(len(x)):
+            # x[i] -= max(x[i])
+            # x[i] = np.exp(x[i])
+            x[i] /= sum(x[i])
+            if sum(x[i]) is nan:
+                print(x[i])
+            # try:
+            #     x[i] /= sum(x[i])
+            # except Exception as e:
+            #     print(e)
+            #     print(x[i])
+            #     exit(0)
+
+        self.x = x
+        out = x
+        # print("out", out)
         return out
 
     def backward(self, dout):
@@ -119,13 +146,11 @@ class SoftMax(object):
         Returns:
             dx: gradients with respect to the input_data of the module
         """
-        n = dout.shape[0]
-        dx = self.x.copy()
-        print(dx)
-        print(n)
-        dx[range(n), list(dout)] -= 1
-        dx /= n
-        return dx
+        # https://zhuanlan.zhihu.com/p/37740860
+        # dx = np.diag(self.x) - np.dot(self.x.transpose(), self.x)
+        # dx = np.dot(dx, dout.transpose()).transpose()
+        # print("dx", dx)
+        return dout
 
     __call__ = forward
 
@@ -141,8 +166,9 @@ class CrossEntropy(object):
         Returns:
             out: cross entropy loss
         """
-        # print(np.log(x))
-        out = np.sum(np.dot(y.transpose(), np.log(x)))
+        x += 1e-7
+        # print("log", np.log(x))
+        out = -np.sum(np.dot(y.transpose(), np.log(x)))
         return out
 
     def backward(self, x, y):
@@ -154,7 +180,10 @@ class CrossEntropy(object):
         Returns:
             dx: gradient of the loss with respect to the input_data x.
         """
+        # x += 1e-6
+        # print(x)
         dx = y - x
+        print("dx", dx)
         return dx
 
     __call__ = forward

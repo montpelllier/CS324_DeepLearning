@@ -19,8 +19,10 @@ class MLP(object):
         """
         self.activation = ReLU()
         self.loss_fc = CrossEntropy()
-        # self.loss = CrossEntropy()
         n_hidden = n_hidden[0]
+        self.layers = []
+        # for i in range(len(n_hidden)):
+        #     self.layers.append(Linear())
         self.fc1 = Linear(n_inputs, n_hidden)
         self.fc2 = Linear(n_hidden, n_classes)
         self.softmax = SoftMax()
@@ -48,3 +50,5 @@ class MLP(object):
         dx = self.activation.backward(dx)
         dx = self.fc1.backward(dx)
         return dx
+
+    __call__ = forward

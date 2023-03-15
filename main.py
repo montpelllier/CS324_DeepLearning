@@ -11,8 +11,8 @@ def print_hi(name):
 
 # 按间距中的绿色按钮以运行脚本。
 if __name__ == '__main__':
-    std = 0.0001
-    arr = np.zeros(9)
+    arr = np.array([10,34,22,1])
+
 
     print(arr)
     # print(np.std(arr[0]))

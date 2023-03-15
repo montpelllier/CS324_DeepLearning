@@ -24,14 +24,22 @@ FLAGS = None
 
 def oneHot(labels, dim=None):
     if dim is None:
-        dim = np.max(labels)+1
+        dim = np.max(labels) + 1
     res = np.zeros((len(labels), dim))
     for i, label in enumerate(labels):
         res[i, label] = 1
     return res
 
 
-def accuracy(predictions, targets):
+def update(module: MLP, lr):
+
+    module.fc1.params['weight'] -= lr * module.fc1.grads['weight']
+    module.fc2.params['weight'] -= lr * module.fc2.grads['weight']
+    module.fc1.params['bias'] -= lr * module.fc1.grads['bias']
+    module.fc2.params['bias'] -= lr * module.fc2.grads['bias']
+
+
+def accuracy(predictions, labels):
     """
     Computes the prediction accuracy, i.e., the average of correct predictions
     of the network.
@@ -41,8 +49,16 @@ def accuracy(predictions, targets):
     Returns:
         accuracy: scalar float, the accuracy of predictions.
     """
-
-    return accuracy
+    # correct = 0
+    # for i in range(len(predictions)):
+    #     for j in range(len(predictions[i])):
+    #         if predictions[i][j] == np.max(predictions[i]):
+    #             if labels[i][j] == 1:
+    #                 correct += 1
+    #             continue
+    # res = correct/len(predictions)
+    res = np.mean((np.argmax(predictions, axis=1) == labels))
+    return res
 
 
 def train():
@@ -69,14 +85,21 @@ def train():
     # print(len(test_label))
 
     module = MLP(n_inputs=2, n_hidden=dim_hidden, n_classes=2)
-
+    # lr = 0.05
     for t in range(max_step):
-        pred = module.forward(train_data)
+        pred = module(train_data)
         loss = module.loss_fc(pred, train_label)
-        print("In round {}, the loss is {}.".format(t, loss))
+        if t % freq == 0:
+            print(pred)
+            # print(train_label)
+            # print(module.fc1.params['weight'])
+            print("In round {}, the loss is {}.".format(t, loss))
+            # print(accuracy(module(test_data), test_label))
         grad = module.loss_fc.backward(pred, train_label)
-        delta = module.backward(grad)
-        print(delta)
+        # print("grad", grad)
+        module.backward(grad)
+        update(module, lr)
+        # print(delta)
 
 
 def main():
