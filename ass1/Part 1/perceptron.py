@@ -61,7 +61,11 @@ if __name__ == '__main__':
     perceptron.train(train_data, train_label)
     # output result
     res = perceptron.forward(test_data)
-    print("accuracy: ", np.dot(test_label, res) / 40)
+    cnt = 0
+    for label, predict in zip(test_label, res):
+        if label == predict:
+            cnt += 1
+    print("accuracy: ", cnt / len(test_data))
     # draw
     x = np.array([-10, 10])
     y = -perceptron.w[0] / perceptron.w[1] * x
