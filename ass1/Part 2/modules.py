@@ -115,12 +115,6 @@ class SoftMax(object):
         To stabilize computation you should use the so-called Max Trick
         https://timvieira.github.io/blog/post/2014/02/11/exp-normalize-trick/
         """
-        # torch.nn.Softmax
-        # print(np.max(x))
-        # print(x)
-        # x -= np.max(x)
-        # x = np.exp(x)
-        # print(x)
         for i in range(len(x)):
             x[i] -= max(x[i])
             x[i] = np.exp(x[i])
@@ -137,10 +131,6 @@ class SoftMax(object):
         Returns:
             dx: gradients with respect to the input_data of the module
         """
-        # https://zhuanlan.zhihu.com/p/37740860
-        # dx = np.diag(self.x) - np.dot(self.x.transpose(), self.x)
-        # dx = np.dot(dx, dout.transpose()).transpose()
-        # print("dx", dx)
         return dout
 
     __call__ = forward

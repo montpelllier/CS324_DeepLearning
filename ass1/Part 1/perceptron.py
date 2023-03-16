@@ -1,4 +1,5 @@
 import numpy as np
+from matplotlib import pyplot as plt
 from numpy import random
 
 
@@ -44,17 +45,29 @@ class Perceptron(object):
 
 
 if __name__ == '__main__':
-    x1 = random.normal(loc=16, scale=5, size=100)
-    y1 = random.normal(loc=1, scale=3, size=100)
-    x2 = random.normal(loc=-5, scale=8, size=100)
-    y2 = random.normal(loc=16, scale=9, size=100)
+    # generate dataset
+    mean1, mean2, = [10, 16], [-6, -3]
+    cov1 = [[3, 0], [0, 4]]
+    cov2 = [[2, 0], [0, 5]]
+    x1, y1 = random.multivariate_normal(mean1, cov1, 100).T
+    x2, y2 = random.multivariate_normal(mean2, cov2, 100).T
+    # split into train set and test set
     train_data = np.array([[x1[i], y1[i]] for i in range(80)] + [[x2[i], y2[i]] for i in range(80)])
     train_label = np.array([1 for i in range(80)] + [-1 for i in range(80)])
     test_data = np.array([[x1[i], y1[i]] for i in range(80, 100)] + [[x2[i], y2[i]] for i in range(80, 100)])
     test_label = np.array([1 for i in range(20)] + [-1 for i in range(20)])
-
+    # start training
     perceptron = Perceptron(160)
     perceptron.train(train_data, train_label)
-
+    # output result
     res = perceptron.forward(test_data)
     print("accuracy: ", np.dot(test_label, res) / 40)
+    # draw
+    x = np.array([-10, 10])
+    y = -perceptron.w[0] / perceptron.w[1] * x
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.scatter(x1, y1)
+    plt.scatter(x2, y2)
+    plt.plot(x, y)
+    plt.show()
