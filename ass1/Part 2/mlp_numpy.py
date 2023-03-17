@@ -26,14 +26,6 @@ class MLP(object):
             self.layers.append(ReLU())
         self.layers.append(Linear(n_hidden[-1], n_classes))
 
-    def predict(self, x):
-        flag = False
-        out = x
-        for i in range(len(self.layers)):
-            out = self.layers[i](out, flag)
-        out = self.softmax(out, flag)
-        return out
-
     def forward(self, x):
         """
         Predict network output from input_data by passing it through several layers.
@@ -58,5 +50,13 @@ class MLP(object):
         for i in range(len(self.layers) - 2, -1, -1):
             dx = self.layers[i].backward(dx)
         return dx
+
+    def predict(self, x):
+        flag = False
+        out = x
+        for i in range(len(self.layers)):
+            out = self.layers[i](out, flag)
+        out = self.softmax(out, flag)
+        return out
 
     __call__ = forward

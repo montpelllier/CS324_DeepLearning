@@ -22,10 +22,9 @@ FLAGS = None
 def oneHot(labels, dim=None):
     if dim is None:
         dim = np.max(labels) + 1
-    res = np.zeros((len(labels), dim))
-    for i, label in enumerate(labels):
-        res[i, label] = 1
-    return res
+    one_hot = np.zeros((len(labels), dim))
+    one_hot[np.arange(len(labels)), labels] = 1
+    return one_hot
 
 
 def accuracy(predictions, labels):
