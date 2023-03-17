@@ -39,15 +39,10 @@ def accuracy(predictions, labels):
         accuracy: scalar float, the accuracy of predictions.
     """
     correct = 0
-    for i in range(len(predictions)):
-        for j in range(len(predictions[i])):
-            if predictions[i][j] == np.max(predictions[i]):
-                if labels[i][j] == 1:
-                    correct += 1
-                continue
-    res = correct / len(predictions)
-    # res = np.mean((np.argmax(predictions, axis=1) == labels))
-    return res
+    for i, pred in enumerate(predictions):
+        if np.argmax(pred) == np.argmax(labels[i]):
+            correct += 1
+    return correct / len(predictions)
 
 
 def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
@@ -63,8 +58,8 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
     for t in range(epoch):
         if sgd:
             rand_i = np.random.randint(len(train_x))
-            x = train_x[rand_i:rand_i+1]
-            y = train_y[rand_i:rand_i+1]
+            x = train_x[rand_i:rand_i + 1]
+            y = train_y[rand_i:rand_i + 1]
         else:
             x = train_x
             y = train_y
@@ -74,7 +69,6 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
         module.backward(grad)
 
         if t % freq == 0:
-            # print(pred)
             train_acc = accuracy(module.predict(train_x), train_y)
             test_acc = accuracy(module.predict(test_x), test_y)
             loss = module.loss_fc(pred, y)
@@ -116,8 +110,8 @@ def main():
     train_label, test_label = oneHot(label[:bound]), oneHot(label[bound:])
     train_data, test_data = np.array(train_data), np.array(test_data)
     # draw
-    # plt.scatter(data[:, 0], data[:, 1], s=10, c=label)
-    # plt.show()
+    plt.scatter(data[:, 0], data[:, 1], s=10, c=label)
+    plt.show()
     # train
     train(max_step, dim_hidden, freq, lr, sgd, (train_data, train_label), (test_data, test_label))
 

@@ -22,17 +22,16 @@ class MLP(object):
             if i == 0:
                 self.layers.append(Linear(n_inputs, n_hidden[i]))
             else:
-                self.layers.append(Linear(n_hidden[i-1], n_hidden[i]))
+                self.layers.append(Linear(n_hidden[i - 1], n_hidden[i]))
             self.layers.append(ReLU())
         self.layers.append(Linear(n_hidden[-1], n_classes))
-
 
     def predict(self, x):
         flag = False
         out = x
         for i in range(len(self.layers)):
             out = self.layers[i](out, flag)
-        out = self.softmax(out)
+        out = self.softmax(out, flag)
         return out
 
     def forward(self, x):
@@ -41,7 +40,7 @@ class MLP(object):
         Args:
             x: input_data to the network
         Returns:
-            out: output of the network
+            x: output of the network
         """
         out = x
         for i in range(len(self.layers)):
@@ -56,7 +55,7 @@ class MLP(object):
             dout: gradients of the loss
         """
         dx = self.layers[-1].backward(dout)
-        for i in range(len(self.layers)-2, -1, -1):
+        for i in range(len(self.layers) - 2, -1, -1):
             dx = self.layers[i].backward(dx)
         return dx
 

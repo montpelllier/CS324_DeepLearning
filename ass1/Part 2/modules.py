@@ -9,7 +9,6 @@ class Linear(object):
         Args:
             in_features: input_data dimension
             out_features: output dimension
-        TODO:
         1) Initialize weights self.params['weight'] using normal distribution with mean = 0 and std = 0.0001.
         2) Initialize biases self.params['bias'] with 0.
         3) Initialize gradients with zeros.
@@ -32,8 +31,6 @@ class Linear(object):
             out: output of the module
         Hint: Similarly to pytorch, you can store the computed values inside the object and use them in the backward
         pass computation. This is true for *all* forward methods of *all* modules in this class.
-        :param x:
-        :param flag:
         """
         if flag:
             self.x = x
@@ -47,7 +44,6 @@ class Linear(object):
             dout: gradients of the previous module
         Returns:
             dx: gradients with respect to the input_data of the module
-        TODO:
         Implement backward pass of the module. Store gradient of the loss with respect to layer parameters in
         self.grads['weight'] and self.grads['bias'].
         """
@@ -65,7 +61,7 @@ class Linear(object):
 
 class ReLU(object):
     def __init__(self):
-        self.out = None
+        self.x = None
 
     def forward(self, x, flag=True):
         """
@@ -77,7 +73,7 @@ class ReLU(object):
         """
         out = np.maximum(0, x)
         if flag:
-            self.out = out
+            self.x = out
         return out
 
     def backward(self, dout):
@@ -88,9 +84,9 @@ class ReLU(object):
         Returns:
             dx: gradients with respect to the input_data of the module
         """
-        self.out[self.out > 0] = 1
-        self.out[self.out <= 0] = 0
-        dx = dout * self.out
+        self.x[self.x > 0] = 1
+        self.x[self.x <= 0] = 0
+        dx = dout * self.x
         return dx
 
     def update(self, lr):
@@ -103,23 +99,22 @@ class SoftMax(object):
     def __init__(self):
         self.x = None
 
-    def forward(self, x):
+    def forward(self, x, flag=True):
         """
         Forward pass.
         Args:
             x: input_data to the module
         Returns:
             out: output of the module
-        TODO:
-        Implement forward pass of the module. 
-        To stabilize computation you should use the so-called Max Trick
+        Implement forward pass of the module. To stabilize computation you should use the so-called Max Trick
         https://timvieira.github.io/blog/post/2014/02/11/exp-normalize-trick/
         """
         for i in range(len(x)):
             x[i] -= max(x[i])
             x[i] = np.exp(x[i])
             x[i] /= sum(x[i])
-        self.x = x
+        if flag:
+            self.x = x
         out = x
         return out
 
