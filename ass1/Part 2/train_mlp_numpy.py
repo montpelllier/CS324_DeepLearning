@@ -80,9 +80,10 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
             layer.update(lr)
 
     plt.figure()
-    plt.plot(train_acc_list)
-    plt.plot(test_acc_list)
+    plt.plot(train_acc_list, label="train accuracy")
+    plt.plot(test_acc_list, label="test accuracy")
     plt.ylabel("accuracy")
+    plt.legend()
     plt.figure()
     plt.plot(loss_list, 'b-')
     plt.ylabel("loss function")
