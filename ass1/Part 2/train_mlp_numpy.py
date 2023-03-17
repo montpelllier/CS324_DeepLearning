@@ -15,7 +15,7 @@ DNN_HIDDEN_UNITS_DEFAULT = '20'
 LEARNING_RATE_DEFAULT = 1e-2
 MAX_EPOCHS_DEFAULT = 1500
 EVAL_FREQ_DEFAULT = 10
-
+SGD_DEFAULT = False
 FLAGS = None
 
 
@@ -50,52 +50,49 @@ def accuracy(predictions, labels):
     return res
 
 
-def train():
+def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
     """
     Performs training and evaluation of MLP model.
     NOTE: You should the model on the whole test set each eval_freq iterations.
     """
-    # YOUR TRAINING CODE GOES HERE
-    args = parser.parse_args()
-    dim_hidden = list(map(int, args.dnn_hidden_units.split(',')))
-    freq = args.eval_freq
-    lr = args.learning_rate
-    max_step = args.max_steps
-    size = 1000
-    data, label = make_moons(n_samples=size, noise=0.05)
-    # plt.scatter(data[:, 0], data[:, 1], s=10, c=label)
-    # plt.show()
-    bound = int(0.8 * size)
-    train_data, test_data = data[:bound], data[bound:]
-    train_label, test_label = oneHot(label[:bound]), oneHot(label[bound:])
-    train_data, test_data = np.array(train_data), np.array(test_data)
+    train_x, train_y = train_set
+    test_x, test_y = test_set
+    train_acc_list, test_acc_list, loss_list = [], [], []
+    module = MLP(2, hidden_list, 2)
+    # start training
+    for t in range(epoch):
+        if sgd:
+            rand_i = np.random.randint(len(train_x))
+            x = train_x[rand_i:rand_i+1]
+            y = train_y[rand_i:rand_i+1]
+        else:
+            x = train_x
+            y = train_y
 
-    module = MLP(n_inputs=2, n_hidden=dim_hidden, n_classes=2)
-    a, l = [], []
-    for t in range(max_step):
-        pred = module(train_data)
+        pred = module(x)
+        grad = module.loss_fc.backward(pred, y)
+        module.backward(grad)
+
         if t % freq == 0:
             # print(pred)
-            # print(train_label)
-            loss = module.loss_fc(pred, train_label)
-            acc = accuracy(module.predict(test_data), test_label)
-            print("In round {}, the loss is {}.".format(t, loss))
-            print("accuracy: ", acc)
-            l.append(loss)
-            a.append(acc)
-
-        grad = module.loss_fc.backward(pred, train_label)
-        module.backward(grad)
+            train_acc = accuracy(module.predict(train_x), train_y)
+            test_acc = accuracy(module.predict(test_x), test_y)
+            loss = module.loss_fc(pred, y)
+            print("In round {}, the loss is {}, the accuracy is {}.".format(t, loss, test_acc))
+            train_acc_list.append(train_acc)
+            test_acc_list.append(test_acc)
+            loss_list.append(loss)
 
         for layer in module.layers:
             layer.update(lr)
 
     plt.figure()
-    plt.plot(l, 'b-')
-    plt.ylabel("loss function")
-    plt.figure()
-    plt.plot(a, 'b-')
+    plt.plot(train_acc_list)
+    plt.plot(test_acc_list)
     plt.ylabel("accuracy")
+    plt.figure()
+    plt.plot(loss_list, 'b-')
+    plt.ylabel("loss function")
     plt.show()
 
 
@@ -103,7 +100,26 @@ def main():
     """
     Main function
     """
-    train()
+    # handle arguments
+    args = parser.parse_args()
+    dim_hidden = list(map(int, args.dnn_hidden_units.split(',')))
+    freq = args.eval_freq
+    lr = args.learning_rate
+    max_step = args.max_steps
+    sgd = args.sgd
+    # generate dataset
+    size = 1000
+    data, label = make_moons(n_samples=size, noise=0.05)
+    # split into train set and test set
+    bound = int(0.8 * size)
+    train_data, test_data = data[:bound], data[bound:]
+    train_label, test_label = oneHot(label[:bound]), oneHot(label[bound:])
+    train_data, test_data = np.array(train_data), np.array(test_data)
+    # draw
+    # plt.scatter(data[:, 0], data[:, 1], s=10, c=label)
+    # plt.show()
+    # train
+    train(max_step, dim_hidden, freq, lr, sgd, (train_data, train_label), (test_data, test_label))
 
 
 if __name__ == '__main__':
@@ -117,5 +133,6 @@ if __name__ == '__main__':
                         help='Number of epochs to run trainer.')
     parser.add_argument('--eval_freq', type=int, default=EVAL_FREQ_DEFAULT,
                         help='Frequency of evaluation on the test set')
+    parser.add_argument('--sgd', type=bool, default=SGD_DEFAULT, help='stochastic gradient descent')
     FLAGS, unparsed = parser.parse_known_args()
     main()
