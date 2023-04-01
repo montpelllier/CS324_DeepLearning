@@ -37,7 +37,7 @@ class MLP(object):
         out = x
         for i in range(len(self.layers)):
             out = self.layers[i](out)
-            out = self.softmax(out)
+        out = self.softmax(out)
         return out
 
     def backward(self, dout):
