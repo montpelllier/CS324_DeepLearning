@@ -89,9 +89,6 @@ class ReLU(object):
         dx = dout * self.x
         return dx
 
-    def update(self, lr):
-        pass
-
     __call__ = forward
 
 
@@ -155,6 +152,7 @@ class CrossEntropy(object):
         Returns:
             dx: gradient of the loss with respect to the input_data x.
         """
+        # softmax+交叉熵的求导
         dx = x - y
         return dx
 

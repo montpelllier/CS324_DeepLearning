@@ -15,16 +15,15 @@ class MLP(object):
             n_hidden: list of integers, where each integer is the number of units in each linear layer
             n_classes: number of classes of the classification problem (i.e., output dimension of the network)
         """
+        input_layer = [Linear(n_inputs, n_hidden[0]), ReLU()]
+        output_layer = [Linear(n_hidden[-1], n_classes), SoftMax()]
+        hidden_layer = []
+        for i in range(len(n_hidden) - 1):
+            hidden_layer.append(Linear(n_hidden[i], n_hidden[i + 1]))
+            hidden_layer.append(ReLU())
+
+        self.layers = input_layer + hidden_layer + output_layer
         self.loss_fc = CrossEntropy()
-        self.softmax = SoftMax()
-        self.layers = []
-        for i in range(len(n_hidden)):
-            if i == 0:
-                self.layers.append(Linear(n_inputs, n_hidden[i]))
-            else:
-                self.layers.append(Linear(n_hidden[i - 1], n_hidden[i]))
-            self.layers.append(ReLU())
-        self.layers.append(Linear(n_hidden[-1], n_classes))
 
     def forward(self, x):
         """
@@ -34,10 +33,9 @@ class MLP(object):
         Returns:
             x: output of the network
         """
+        for layer in self.layers:
+            x = layer(x)
         out = x
-        for i in range(len(self.layers)):
-            out = self.layers[i](out)
-        out = self.softmax(out)
         return out
 
     def backward(self, dout):
@@ -46,17 +44,16 @@ class MLP(object):
         Args:
             dout: gradients of the loss
         """
-        dx = self.layers[-1].backward(dout)
-        for i in range(len(self.layers) - 2, -1, -1):
-            dx = self.layers[i].backward(dx)
+        for layer in reversed(self.layers):
+            dout = layer.backward(dout)
+        dx = dout
         return dx
 
     def predict(self, x):
         flag = False
+        for layer in self.layers:
+            x = layer(x, flag)
         out = x
-        for i in range(len(self.layers)):
-            out = self.layers[i](out, flag)
-        out = self.softmax(out, flag)
         return out
 
     __call__ = forward

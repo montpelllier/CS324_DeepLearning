@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.datasets import make_moons
 
+import modules
 from mlp_numpy import MLP
 
 # Default constants
@@ -38,6 +39,7 @@ def accuracy(predictions, labels):
         accuracy: scalar float, the accuracy of predictions.
     """
     correct = 0
+    # print(predictions)
     for i, pred in enumerate(predictions):
         if np.argmax(pred) == np.argmax(labels[i]):
             correct += 1
@@ -77,7 +79,8 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
             loss_list.append(loss)
 
         for layer in module.layers:
-            layer.update(lr)
+            if isinstance(layer, modules.Linear):
+                layer.update(lr)
 
     plt.figure()
     plt.plot(train_acc_list, label="train accuracy")
