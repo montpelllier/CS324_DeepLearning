@@ -4,33 +4,26 @@ from __future__ import print_function
 
 import argparse
 
-import matplotlib.pyplot as plt
 import numpy as np
-import torch.nn.functional
+import torch
+from matplotlib import pyplot as plt
 from sklearn.datasets import make_moons
-from torch import tensor
+from sklearn.model_selection import train_test_split
+from torch import nn
+from torchvision import transforms, datasets
 
-import modules
-from mlp_numpy import MLP
+from pytorch_mlp import MLP
 
 # Default constants
-DNN_HIDDEN_UNITS_DEFAULT = '20'
+DNN_HIDDEN_UNITS_DEFAULT = '512, 256'
 LEARNING_RATE_DEFAULT = 1e-2
 MAX_EPOCHS_DEFAULT = 1500
 EVAL_FREQ_DEFAULT = 10
-SGD_DEFAULT = False
+
 FLAGS = None
 
 
-def oneHot(labels, dim=None):
-    if dim is None:
-        dim = np.max(labels) + 1
-    one_hot = np.zeros((len(labels), dim))
-    one_hot[np.arange(len(labels)), labels] = 1
-    return one_hot
-
-
-def accuracy(predictions, labels):
+def accuracy(predictions, targets):
     """
     Computes the prediction accuracy, i.e., the average of correct predictions
     of the network.
@@ -40,12 +33,10 @@ def accuracy(predictions, labels):
     Returns:
         accuracy: scalar float, the accuracy of predictions.
     """
-    correct = 0
-    # print(predictions)
-    for i, pred in enumerate(predictions):
-        if np.argmax(pred) == np.argmax(labels[i]):
-            correct += 1
-    return correct / len(predictions)
+    _, one_hot = torch.max(predictions.data, 1)
+    one_hot = nn.functional.one_hot(one_hot)
+    acc = (one_hot == targets).all(dim=1).float().mean()
+    return acc
 
 
 def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
@@ -56,38 +47,36 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
     train_x, train_y = train_set
     test_x, test_y = test_set
     train_acc_list, test_acc_list, loss_list = [], [], []
-    module = MLP(2, hidden_list, 2)
-
-    li2 = []
+    model = MLP(32*32*3, hidden_list, 10)
+    optimizer = torch.optim.SGD(model.parameters(), lr)
+    # torch.optim.
     # start training
     for t in range(epoch):
-        if sgd:
-            rand_i = np.random.randint(len(train_x))
-            x = train_x[rand_i:rand_i + 1]
-            y = train_y[rand_i:rand_i + 1]
-        else:
-            x = train_x
-            y = train_y
+        for i, data in enumerate(trainloader, 0):
+            inputs, labels = data
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = model.criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+        x = train_x
+        y = train_y
 
-        pred = module(x)
-        grad = module.loss_fc.backward(pred, y)
-        module.backward(grad)
+        outputs = model(x)
+        loss = model.criterion(outputs, y)
+        loss.backward()
+        optimizer.step()
 
         if t % freq == 0:
-            train_acc = accuracy(module.predict(train_x), train_y)
-            test_acc = accuracy(module.predict(test_x), test_y)
-            loss = module.loss_fc(pred, y)
-            loss2 = torch.nn.functional.cross_entropy(tensor(pred), tensor(y))
-            print("In round {}, the loss is {}, the accuracy is {}.".format(t, loss, test_acc))
+            train_acc = accuracy(model(train_x), train_y)
+            test_acc = accuracy(model(test_x), test_y)
+            print("In round {}, the loss is {}, the test accuracy is {}, and the train accuracy is {}.".format(t, loss,
+                                                                                                               test_acc,
+                                                                                                               train_acc))
+
             train_acc_list.append(train_acc)
             test_acc_list.append(test_acc)
-            loss_list.append(loss)
-            li2.append(loss2)
-            print(loss2)
-
-        for layer in module.layers:
-            if isinstance(layer, modules.Linear):
-                layer.update(lr)
+            loss_list.append(float(loss))
 
     plt.figure()
     plt.plot(train_acc_list, label="train accuracy")
@@ -95,8 +84,7 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
     plt.ylabel("accuracy")
     plt.legend()
     plt.figure()
-    plt.plot(loss_list, color='blue')
-    plt.plot(li2, color='orange')
+    plt.plot(loss_list, 'b-')
     plt.ylabel("loss function")
     plt.show()
 
@@ -111,20 +99,26 @@ def main():
     freq = args.eval_freq
     lr = args.learning_rate
     max_step = args.max_steps
-    sgd = args.sgd
+    # sgd = args.sgd
+    sgd = False
     # generate dataset
-    size = 1000
-    data, label = make_moons(n_samples=size, noise=0.05)
-    # split into train set and test set
-    bound = int(0.8 * size)
-    train_data, test_data = data[:bound], data[bound:]
-    train_label, test_label = oneHot(label[:bound]), oneHot(label[bound:])
-    train_data, test_data = np.array(train_data), np.array(test_data)
-    # draw
-    plt.scatter(data[:, 0], data[:, 1], s=10, c=label)
-    plt.show()
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
+
+    trainset = datasets.CIFAR10(root='./data', train=True,
+                                download=True, transform=transform)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64,
+                                              shuffle=True, num_workers=2)
+
+    testset = datasets.CIFAR10(root='./data', train=False,
+                               download=True, transform=transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=64,
+                                             shuffle=False, num_workers=2)
+
     # train
-    train(max_step, dim_hidden, freq, lr, sgd, (train_data, train_label), (test_data, test_label))
+    train(max_step, dim_hidden, freq, lr, sgd, trainloader, testloader)
 
 
 if __name__ == '__main__':
@@ -138,6 +132,5 @@ if __name__ == '__main__':
                         help='Number of epochs to run trainer.')
     parser.add_argument('--eval_freq', type=int, default=EVAL_FREQ_DEFAULT,
                         help='Frequency of evaluation on the test set')
-    parser.add_argument('--sgd', type=bool, default=SGD_DEFAULT, help='stochastic gradient descent')
     FLAGS, unparsed = parser.parse_known_args()
     main()

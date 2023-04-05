@@ -32,10 +32,8 @@ def accuracy(predictions, targets):
     Returns:
         accuracy: scalar float, the accuracy of predictions.
     """
-    # print("predictions: ", predictions)
     _, one_hot = torch.max(predictions.data, 1)
     one_hot = nn.functional.one_hot(one_hot)
-    # print(one_hot)
     acc = (one_hot == targets).all(dim=1).float().mean()
     return acc
 
@@ -50,9 +48,7 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
     train_acc_list, test_acc_list, loss_list = [], [], []
     module = MLP(2, hidden_list, 2)
     optimizer = torch.optim.SGD(module.parameters(), lr)
-
-    # print("train_y: ", train_y)
-    # print("test_y: ", test_y)
+    # torch.optim.
     # start training
     for t in range(epoch):
         if sgd:
@@ -65,8 +61,10 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
 
         outputs = module(x)
         loss = module.criterion(outputs, y)
+        # update paras
         loss.backward()
         optimizer.step()
+        optimizer.zero_grad()
 
         if t % freq == 0:
             train_acc = accuracy(module(train_x), train_y)

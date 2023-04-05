@@ -140,7 +140,7 @@ class CrossEntropy(object):
             out: cross entropy loss
         """
         x += 1e-7
-        out = -np.sum(y * np.log(x))
+        out = -np.mean(y * np.log(x))
         return out
 
     def backward(self, x, y):
