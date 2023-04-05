@@ -58,7 +58,7 @@ def train(epoch_num: int, learning_rate, train_loader, freq, test_loader):
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
-            running_loss += loss.item()/len(train_loader)
+            running_loss += loss.item() / len(train_loader)
 
         print(running_loss)
 
@@ -103,10 +103,6 @@ def main():
                                             download=True, transform=transform)
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size,
                                               shuffle=False, num_workers=2)
-
-    # the labels of the dataset.
-    classes = ('plane', 'car', 'bird', 'cat',
-               'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
     train(max_step, lr, train_loader, freq, test_loader)
 
