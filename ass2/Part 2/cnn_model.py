@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import torch
+import torch.nn.functional as F
 from torch import nn
 
 
@@ -18,11 +18,25 @@ class CNN(nn.Module):
         """
         super(CNN, self).__init__()
 
-        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, padding=1)
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
-        self.fc1 = nn.Linear(32 * 8 * 8, 512)
-        self.fc2 = nn.Linear(512, 10)
+        # Pool Layer
+        self.pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.pool_pos = [0, 1, 3, 5, 7]
+        # Batch Normalization Layer
+        self.bn_list = [nn.BatchNorm2d(64), nn.BatchNorm2d(128), nn.BatchNorm2d(256), nn.BatchNorm2d(256),
+                        nn.BatchNorm2d(512), nn.BatchNorm2d(512), nn.BatchNorm2d(512), nn.BatchNorm2d(512)]
+        # Relu Layer
+        self.relu = nn.ReLU()
+        # Convolution Layer
+        self.conv_list = [nn.Conv2d(in_channels=n_channels, out_channels=64, kernel_size=3, stride=1, padding=1),
+                          nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1),
+                          nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1),
+                          nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, padding=1),
+                          nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=1, padding=1),
+                          nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1),
+                          nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1),
+                          nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1)]
+        # Linear Layer
+        self.linear = nn.Linear(512 * 3 * 3, n_classes)
 
     def forward(self, x):
         """
@@ -33,9 +47,12 @@ class CNN(nn.Module):
         Returns:
           out: outputs of the network
         """
-        x = self.pool(torch.relu(self.conv1(x)))
-        x = self.pool(torch.relu(self.conv2(x)))
-        x = x.view(-1, 32 * 8 * 8)
-        x = torch.relu(self.fc1(x))
-        x = self.fc2(x)
+        # conv -> ReLU -> pool
+        for i, (conv, bn) in enumerate(zip(self.conv_list, self.bn_list)):
+            x = self.relu(bn(conv(x)))
+            if i in self.pool_pos:
+                x = self.pool(x)
+        x = self.linear(x)
+
+        out = x
         return out
