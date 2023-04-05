@@ -6,13 +6,16 @@ import argparse
 
 import torch
 import torchvision
+from torch import nn
 from torchvision import transforms
+
+import cnn_model
 
 # Default constants
 LEARNING_RATE_DEFAULT = 1e-4
 BATCH_SIZE_DEFAULT = 32
-MAX_EPOCHS_DEFAULT = 5000
-EVAL_FREQ_DEFAULT = 500
+MAX_EPOCHS_DEFAULT = 300
+EVAL_FREQ_DEFAULT = 20
 DATA_DIR_DEFAULT = './data'
 OPTIMIZER_DEFAULT = 'ADAM'
 
@@ -29,22 +32,50 @@ def accuracy(predictions, targets):
     Returns:
         accuracy: scalar float, the accuracy of predictions.
     """
-    return accuracy
+    _, one_hot = torch.max(predictions.data, 1)
+    one_hot = nn.functional.one_hot(one_hot)
+    acc = (one_hot == targets).all(dim=1).float().mean()
+    return acc
 
 
-def train(epoch: int, trainloader, optimizer):
+def train(epoch_num: int, learning_rate, train_loader, freq, test_loader):
     """
     Performs training and evaluation of MLP model.
     NOTE: You should the model on the whole test set each eval_freq iterations.
     """
     # YOUR TRAINING CODE GOES HERE
+    model = cnn_model.CNN(3, 10)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-    for t in range(epoch):
-
-        for i, data in enumerate(trainloader):
+    for epoch in range(epoch_num):
+        running_loss = 0
+        for data in train_loader:
             inputs, labels = data
             optimizer.zero_grad()
 
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()/len(train_loader)
+
+        print(running_loss)
+
+        if epoch % freq == 0:
+            print('Epoch [{}/{}], Loss: {:.4f}'.format(epoch + 1, epoch_num, running_loss))
+
+    # 测试模型
+    with torch.no_grad():
+        correct = 0
+        total = 0
+        for images, labels in test_loader:
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+        print('测试集准确率为: {} %'.format(100 * correct / total))
 
 
 def main():
@@ -63,19 +94,21 @@ def main():
     transform = transforms.Compose(
         [transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-    trainset = torchvision.datasets.CIFAR10(root=data_dir, train=True,
+
+    train_set = torchvision.datasets.CIFAR10(root=data_dir, train=True,
+                                             download=True, transform=transform)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size,
+                                               shuffle=True, num_workers=2)
+    test_set = torchvision.datasets.CIFAR10(root=data_dir, train=False,
                                             download=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
-                                              shuffle=True, num_workers=2)
-    testset = torchvision.datasets.CIFAR10(root=data_dir, train=False,
-                                           download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=4,
-                                             shuffle=False, num_workers=2)
+    test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size,
+                                              shuffle=False, num_workers=2)
+
     # the labels of the dataset.
     classes = ('plane', 'car', 'bird', 'cat',
                'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-    train()
+    train(max_step, lr, train_loader, freq, test_loader)
 
 
 if __name__ == '__main__':

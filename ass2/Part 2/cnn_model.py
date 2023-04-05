@@ -36,7 +36,7 @@ class CNN(nn.Module):
                           nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1),
                           nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1)]
         # Linear Layer
-        self.linear = nn.Linear(512 * 3 * 3, n_classes)
+        self.linear = nn.Linear(512, n_classes)
 
     def forward(self, x):
         """
@@ -52,6 +52,8 @@ class CNN(nn.Module):
             x = self.relu(bn(conv(x)))
             if i in self.pool_pos:
                 x = self.pool(x)
+        # Resize x
+        x = x.view(-1, 512)
         x = self.linear(x)
 
         out = x
