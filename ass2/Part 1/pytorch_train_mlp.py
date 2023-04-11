@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import argparse
 
-import numpy as np
 import torch
 from matplotlib import pyplot as plt
 from sklearn.datasets import make_moons
@@ -63,9 +62,11 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
         if t % freq == 0:
             train_acc = accuracy(module(train_x), train_y)
             test_acc = accuracy(module(test_x), test_y)
-            print("In round {}, the loss is {}, the test accuracy is {}, and the train accuracy is {}.".format(t, loss,
-                                                                                                               test_acc,
-                                                                                                               train_acc))
+            print(
+                "In round {}, the loss is {}, the test accuracy is {:.6f}, and the train accuracy is {:.6f}.".format(t,
+                                                                                                                     loss,
+                                                                                                                     test_acc,
+                                                                                                                     train_acc))
 
             train_acc_list.append(train_acc)
             test_acc_list.append(test_acc)

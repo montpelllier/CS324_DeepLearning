@@ -7,7 +7,6 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.datasets import make_moons
-from torch import tensor
 
 import modules
 from mlp_numpy import MLP
