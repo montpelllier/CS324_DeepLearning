@@ -48,8 +48,7 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
     train_acc_list, test_acc_list, loss_list = [], [], []
     module = MLP(2, hidden_list, 2)
     optimizer = torch.optim.SGD(module.parameters(), lr)
-    # torch.optim.
-    # start training
+
     for t in range(epoch):
         if sgd:
             rand_i = np.random.randint(len(train_x))
@@ -78,11 +77,13 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
             loss_list.append(float(loss))
 
     plt.figure()
+    plt.title("Pytorch MLP Accuracy")
     plt.plot(train_acc_list, label="train accuracy")
     plt.plot(test_acc_list, label="test accuracy")
     plt.ylabel("accuracy")
     plt.legend()
     plt.figure()
+    plt.title("Pytorch MLP Loss")
     plt.plot(loss_list, 'b-')
     plt.ylabel("loss function")
     plt.show()
