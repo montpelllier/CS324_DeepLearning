@@ -50,13 +50,8 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
     optimizer = torch.optim.SGD(module.parameters(), lr)
 
     for t in range(epoch):
-        if sgd:
-            rand_i = np.random.randint(len(train_x))
-            x = train_x[rand_i:rand_i + 1]
-            y = train_y[rand_i:rand_i + 1]
-        else:
-            x = train_x
-            y = train_y
+        x = train_x
+        y = train_y
 
         outputs = module(x)
         loss = module.criterion(outputs, y)

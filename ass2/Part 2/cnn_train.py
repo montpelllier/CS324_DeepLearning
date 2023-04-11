@@ -15,8 +15,8 @@ import cnn_model
 # Default constants
 LEARNING_RATE_DEFAULT = 1e-4
 BATCH_SIZE_DEFAULT = 32
-MAX_EPOCHS_DEFAULT = 10
-EVAL_FREQ_DEFAULT = 2
+MAX_EPOCHS_DEFAULT = 5000
+EVAL_FREQ_DEFAULT = 500
 DATA_DIR_DEFAULT = './data'
 OPTIMIZER_DEFAULT = 'ADAM'
 
@@ -53,7 +53,7 @@ def train(epoch_num: int, learning_rate, train_loader, freq, test_loader):
     for epoch in range(epoch_num):
         running_loss = 0
         for i, data in enumerate(train_loader):
-            # start_time = datetime.datetime.now()
+            start_time = datetime.datetime.now()
 
             inputs, labels = data
             optimizer.zero_grad()
@@ -66,9 +66,9 @@ def train(epoch_num: int, learning_rate, train_loader, freq, test_loader):
             if i % 100 == 99:
                 print('Epoch [{}/{}], Loss: {:.4f}, Index [{}/{}]'.format(epoch + 1, epoch_num, running_loss, i, len(train_loader)))
 
-            # end_time = datetime.datetime.now()
-            # delta = (end_time-start_time)
-            # print(delta)
+            end_time = datetime.datetime.now()
+            delta = (end_time-start_time)
+            print(delta)
 
         print(running_loss)
 
