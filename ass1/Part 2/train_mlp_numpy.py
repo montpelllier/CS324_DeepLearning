@@ -6,9 +6,7 @@ import argparse
 
 import matplotlib.pyplot as plt
 import numpy as np
-import torch.nn.functional
 from sklearn.datasets import make_moons
-from torch import tensor
 
 import modules
 from mlp_numpy import MLP
@@ -58,7 +56,6 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
     train_acc_list, test_acc_list, loss_list = [], [], []
     module = MLP(2, hidden_list, 2)
 
-    li2 = []
     # start training
     for t in range(epoch):
         if sgd:
@@ -77,13 +74,10 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
             train_acc = accuracy(module.predict(train_x), train_y)
             test_acc = accuracy(module.predict(test_x), test_y)
             loss = module.loss_fc(pred, y)
-            loss2 = torch.nn.functional.cross_entropy(tensor(pred), tensor(y))
             print("In round {}, the loss is {}, the accuracy is {}.".format(t, loss, test_acc))
             train_acc_list.append(train_acc)
             test_acc_list.append(test_acc)
             loss_list.append(loss)
-            li2.append(loss2)
-            print(loss2)
 
         for layer in module.layers:
             if isinstance(layer, modules.Linear):
@@ -96,7 +90,6 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
     plt.legend()
     plt.figure()
     plt.plot(loss_list, color='blue')
-    plt.plot(li2, color='orange')
     plt.ylabel("loss function")
     plt.show()
 
@@ -121,8 +114,8 @@ def main():
     train_label, test_label = oneHot(label[:bound]), oneHot(label[bound:])
     train_data, test_data = np.array(train_data), np.array(test_data)
     # draw
-    plt.scatter(data[:, 0], data[:, 1], s=10, c=label)
-    plt.show()
+    # plt.scatter(data[:, 0], data[:, 1], s=10, c=label)
+    # plt.show()
     # train
     train(max_step, dim_hidden, freq, lr, sgd, (train_data, train_label), (test_data, test_label))
 

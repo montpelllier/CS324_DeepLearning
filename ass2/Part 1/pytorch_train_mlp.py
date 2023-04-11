@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import argparse
 
-import numpy as np
 import torch
 from matplotlib import pyplot as plt
 from sklearn.datasets import make_moons
@@ -48,16 +47,10 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
     train_acc_list, test_acc_list, loss_list = [], [], []
     module = MLP(2, hidden_list, 2)
     optimizer = torch.optim.SGD(module.parameters(), lr)
-    # torch.optim.
-    # start training
+
     for t in range(epoch):
-        if sgd:
-            rand_i = np.random.randint(len(train_x))
-            x = train_x[rand_i:rand_i + 1]
-            y = train_y[rand_i:rand_i + 1]
-        else:
-            x = train_x
-            y = train_y
+        x = train_x
+        y = train_y
 
         outputs = module(x)
         loss = module.criterion(outputs, y)
@@ -69,20 +62,24 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
         if t % freq == 0:
             train_acc = accuracy(module(train_x), train_y)
             test_acc = accuracy(module(test_x), test_y)
-            print("In round {}, the loss is {}, the test accuracy is {}, and the train accuracy is {}.".format(t, loss,
-                                                                                                               test_acc,
-                                                                                                               train_acc))
+            print(
+                "In round {}, the loss is {}, the test accuracy is {:.6f}, and the train accuracy is {:.6f}.".format(t,
+                                                                                                                     loss,
+                                                                                                                     test_acc,
+                                                                                                                     train_acc))
 
             train_acc_list.append(train_acc)
             test_acc_list.append(test_acc)
             loss_list.append(float(loss))
 
     plt.figure()
+    plt.title("Pytorch MLP Accuracy")
     plt.plot(train_acc_list, label="train accuracy")
     plt.plot(test_acc_list, label="test accuracy")
     plt.ylabel("accuracy")
     plt.legend()
     plt.figure()
+    plt.title("Pytorch MLP Loss")
     plt.plot(loss_list, 'b-')
     plt.ylabel("loss function")
     plt.show()
