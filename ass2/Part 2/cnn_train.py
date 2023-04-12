@@ -16,12 +16,23 @@ import cnn_model
 # Default constants
 LEARNING_RATE_DEFAULT = 1e-4
 BATCH_SIZE_DEFAULT = 32
-MAX_EPOCHS_DEFAULT = 15
-EVAL_FREQ_DEFAULT = 1
+MAX_EPOCHS_DEFAULT = 50
+EVAL_FREQ_DEFAULT = 10
 DATA_DIR_DEFAULT = './data'
 OPTIMIZER_DEFAULT = 'ADAM'
 
 FLAGS = None
+
+
+def get_acc(model, data_loader):
+    with torch.no_grad():
+        correct, total = 0, 0
+        for images, labels in data_loader:
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+    return correct / total
 
 
 def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, test_loader):
@@ -30,7 +41,7 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
     NOTE: You should the model on the whole test set each eval_freq iterations.
     """
     # YOUR TRAINING CODE GOES HERE
-    model = cnn_model.CNN1(3, 10)
+    model = cnn_model.CNN(3, 10)
     criterion = nn.CrossEntropyLoss()
     optimizer_name = optimizer_name.upper()
     if optimizer_name == 'ADAM':
@@ -44,54 +55,38 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
     # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     train_acc_list, test_acc_list, loss_list = [], [], []
-    for epoch in range(epoch_num):
-        running_loss = 0
-        start_time = datetime.datetime.now()
-        for i, data in enumerate(train_loader):
-            inputs, labels = data
 
+    epoch = 0
+    flag = True
+    while flag:
+        for X, y in train_loader:
+            epoch += 1
             optimizer.zero_grad()
-            outputs = model(inputs)
-            # print(outputs)
-            # _, predicted = torch.max(outputs.data, 1)
-            # print("predicted", predicted)
-            # print("labels", labels)
-            loss = criterion(outputs, labels)
+            outputs = model(X)
+            loss = criterion(outputs, y)
             loss.backward()
             optimizer.step()
-            running_loss += loss.item() / len(train_loader)
 
-        end_time = datetime.datetime.now()
-        delta = (end_time - start_time)
-        print(delta)
-        # loss_list.append(running_loss)
-        if epoch % freq == 0:
-            # 测试模型
-            with torch.no_grad():
-                correct, total = 0, 0
-                for images, labels in test_loader:
-                    outputs = model(images)
-                    _, predicted = torch.max(outputs.data, 1)
-                    total += labels.size(0)
-                    correct += (predicted == labels).sum().item()
-                test_acc = correct / total
+            loss_list.append(loss)
+            # print("epoch", epoch)
+            if epoch % freq == 0:
+                # 测试模型
+                print("testing model")
+                # print(len(test_loader)+len(train_loader))
+                test_acc = get_acc(model, test_loader)
                 test_acc_list.append(test_acc)
-
-                correct, total = 0, 0
-                for images, labels in train_loader:
-                    outputs = model(images)
-                    _, predicted = torch.max(outputs.data, 1)
-                    total += labels.size(0)
-                    correct += (predicted == labels).sum().item()
-                train_acc = correct / total
+                train_acc = get_acc(model, train_loader)
                 train_acc_list.append(train_acc)
-
                 print(
-                    'Epoch [{}/{}], Loss: {:.4f}, Test Accuracy: {:.4f} %, Train Accuracy: {:.4f} %.'.format(epoch + 1,
-                                                                                                             epoch_num,
-                                                                                                             running_loss,
-                                                                                                             test_acc * 100,
-                                                                                                             train_acc * 100))
+                    'Epoch [{}/{}], Loss: {:.4f}, Test Acc.: {:.4f} %, Train Acc.{:.4f} %.'.format(epoch,
+                                                                                                   epoch_num,
+                                                                                                   loss,
+                                                                                                   test_acc * 100,
+                                                                                                   train_acc * 100))
+                if epoch == epoch_num:
+                    print("finish training")
+                    flag = False
+                    break
 
     plt.figure()
     plt.title("Pytorch CNN Accuracy with " + optimizer_name)
@@ -133,10 +128,7 @@ def main():
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size,
                                               shuffle=False, num_workers=2)
 
-    # the labels of the dataset.
-    classes = ('plane', 'car', 'bird', 'cat',
-               'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
+    print("start training")
     train(max_step, optimizer, lr, train_loader, freq, test_loader)
 
 
