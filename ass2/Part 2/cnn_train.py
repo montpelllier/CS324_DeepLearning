@@ -24,10 +24,11 @@ OPTIMIZER_DEFAULT = 'ADAM'
 FLAGS = None
 
 
-def get_acc(model, data_loader):
+def get_acc(model, data_loader, device):
     with torch.no_grad():
         correct, total = 0, 0
         for images, labels in data_loader:
+            images, labels = images.to(device), labels.to(device)
             outputs = model(images)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
@@ -41,7 +42,14 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
     NOTE: You should the model on the whole test set each eval_freq iterations.
     """
     # YOUR TRAINING CODE GOES HERE
-    model = cnn_model.CNN(3, 10)
+    if torch.cuda.is_available():
+        print("using GPU", torch.cuda.get_device_name(0))
+        device = torch.device("cuda")
+    else:
+        print("using CPU")
+        device = torch.device("cpu")
+
+    model = cnn_model.CNN(3, 10).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer_name = optimizer_name.upper()
     if optimizer_name == 'ADAM':
@@ -60,6 +68,7 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
     while flag:
         for X, y in train_loader:
             epoch += 1
+            X, y = X.to(device), y.to(device)
             optimizer.zero_grad()
             outputs = model(X)
             loss = criterion(outputs, y)
@@ -72,9 +81,9 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
                 # 测试模型
                 print("testing model")
                 # print(len(test_loader)+len(train_loader))
-                test_acc = get_acc(model, test_loader)
+                test_acc = get_acc(model, test_loader, device)
                 test_acc_list.append(test_acc)
-                train_acc = get_acc(model, train_loader)
+                train_acc = get_acc(model, train_loader, device)
                 train_acc_list.append(train_acc)
                 print(
                     'Epoch [{}/{}], Loss: {:.4f}, Test Acc.: {:.4f} %, Train Acc.{:.4f} %.'.format(epoch,
@@ -113,12 +122,6 @@ def main():
     batch_size = args.batch_size
     data_dir = args.data_dir
 
-    if torch.cuda.is_available():
-        device = torch.device("cuda")  # GPU可用时使用GPU
-        print('Using GPU:', torch.cuda.get_device_name(0))
-    else:
-        device = torch.device("cpu")  # GPU不可用时使用CPU
-        print('Using CPU')
     # load and transform the dataset.
     transform = transforms.Compose(
         [transforms.ToTensor(),
