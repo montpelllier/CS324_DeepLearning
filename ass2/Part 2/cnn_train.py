@@ -19,7 +19,7 @@ BATCH_SIZE_DEFAULT = 32
 MAX_EPOCHS_DEFAULT = 15
 EVAL_FREQ_DEFAULT = 1
 DATA_DIR_DEFAULT = './data'
-OPTIMIZER_DEFAULT = 'RPROP'
+OPTIMIZER_DEFAULT = 'ADAM'
 
 FLAGS = None
 
@@ -52,6 +52,10 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
 
             optimizer.zero_grad()
             outputs = model(inputs)
+            # print(outputs)
+            # _, predicted = torch.max(outputs.data, 1)
+            # print("predicted", predicted)
+            # print("labels", labels)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
