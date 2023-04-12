@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import datetime
 
 import torch
 import torchvision
@@ -22,23 +23,6 @@ OPTIMIZER_DEFAULT = 'ADAM'
 
 FLAGS = None
 
-
-def accuracy(predictions, targets):
-    """
-    Computes the prediction accuracy, i.e., the average of correct predictions
-    of the network.
-    Args:
-        predictions: 2D float array of size [number_of_data_samples, n_classes]
-        labels: 2D int array of size [number_of_data_samples, n_classes] with one-hot encoding of ground-truth labels
-    Returns:
-        accuracy: scalar float, the accuracy of predictions.
-    """
-    _, one_hot = torch.max(predictions.data, 1)
-    one_hot = nn.functional.one_hot(one_hot)
-    acc = (one_hot == targets).all(dim=1).float().mean()
-    return acc
-
-
 def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, test_loader):
     """
     Performs training and evaluation of MLP model.
@@ -52,34 +36,29 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     elif optimizer_name == 'SGD':
         optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+    else:
+        return
     # elif optimizer_name == :
     #     optimize = torch.optim.
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-    # print(len(train_loader))
     train_acc_list, test_acc_list, loss_list = [], [], []
     for epoch in range(epoch_num):
         running_loss = 0
         for i, data in enumerate(train_loader):
-            # start_time = datetime.datetime.now()
+            start_time = datetime.datetime.now()
             inputs, labels = data
             optimizer.zero_grad()
 
             outputs = model(inputs)
-            # print(outputs)
-            # _, predicted = torch.max(outputs.data, 1)
-            # print("predicted", predicted)
-            # print("labels", labels)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
             running_loss += loss.item() / len(train_loader)
-            # if i % 100 == 99:
-            #     print('Epoch [{}/{}], Loss: {:.4f}, Index [{}/{}]'.format(epoch + 1, epoch_num, running_loss, i,
-            #                                                               len(train_loader)))
-            # end_time = datetime.datetime.now()
-            # delta = (end_time - start_time)
-            # print(delta)
+
+            end_time = datetime.datetime.now()
+            delta = (end_time - start_time)
+            print(delta)
 
         loss_list.append(running_loss)
         if epoch % freq == 0:
@@ -111,13 +90,13 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
                                                                                                              train_acc * 100))
 
     plt.figure()
-    plt.title("Pytorch CNN Accuracy")
+    plt.title("Pytorch CNN Accuracy with " + optimizer_name)
     plt.plot(train_acc_list, label="train accuracy")
     plt.plot(test_acc_list, label="test accuracy")
     plt.ylabel("accuracy")
     plt.legend()
     plt.figure()
-    plt.title("Pytorch CNN Loss")
+    plt.title("Pytorch CNN Loss with " + optimizer_name)
     plt.plot(loss_list, 'b-')
     plt.ylabel("loss function")
     plt.show()
@@ -130,6 +109,7 @@ def main():
     # handle arguments
     args = parser.parse_args()
     freq = args.eval_freq
+    optimizer = args.optimizer
     lr = args.learning_rate
     max_step = args.max_steps
     batch_size = args.batch_size
@@ -153,7 +133,7 @@ def main():
     classes = ('plane', 'car', 'bird', 'cat',
                'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-    train(max_step, OPTIMIZER_DEFAULT, lr, train_loader, freq, test_loader)
+    train(max_step, optimizer, lr, train_loader, freq, test_loader)
 
 
 if __name__ == '__main__':
@@ -169,6 +149,7 @@ if __name__ == '__main__':
                         help='Frequency of evaluation on the test set')
     parser.add_argument('--data_dir', type=str, default=DATA_DIR_DEFAULT,
                         help='Directory for storing input data')
+    parser.add_argument('--optimizer', type=str, default=OPTIMIZER_DEFAULT, help='Name of optimizer')
     FLAGS, unparsed = parser.parse_known_args()
 
     main()
