@@ -50,8 +50,14 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
         device = torch.device("cpu")
 
     model = cnn_model.CNN(3, 10).to(device)
+    # model = model.to(device)
+    # for name, param in model.named_parameters():
+    #     if param.requires_grad:
+    #         print(name, param.data.type())
+    #         param.data = param.data.to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer_name = optimizer_name.upper()
+
     if optimizer_name == 'ADAM':
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     elif optimizer_name == 'SGD':
