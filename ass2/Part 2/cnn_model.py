@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 from torch import nn
+import torch.nn.functional as F
 
 
 class CNN(nn.Module):
@@ -81,7 +82,6 @@ class CNN1(nn.Module):
         self.fc3 = nn.Linear(84, n_classes)
 
     def forward(self, x):
-
         # conv -> ReLU -> pool
         # After the operations, the size of x is: 14 * 14
         x = self.pool(F.relu(self.conv1(x)))

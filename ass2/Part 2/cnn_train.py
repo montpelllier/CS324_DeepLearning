@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import datetime
 
 import torch
 import torchvision
@@ -56,30 +57,23 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
     #     optimize = torch.optim.
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-    # print(len(train_loader))
     train_acc_list, test_acc_list, loss_list = [], [], []
     for epoch in range(epoch_num):
         running_loss = 0
         for i, data in enumerate(train_loader):
-            # start_time = datetime.datetime.now()
+            start_time = datetime.datetime.now()
+
             inputs, labels = data
             optimizer.zero_grad()
-
             outputs = model(inputs)
-            # print(outputs)
-            # _, predicted = torch.max(outputs.data, 1)
-            # print("predicted", predicted)
-            # print("labels", labels)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
             running_loss += loss.item() / len(train_loader)
-            # if i % 100 == 99:
-            #     print('Epoch [{}/{}], Loss: {:.4f}, Index [{}/{}]'.format(epoch + 1, epoch_num, running_loss, i,
-            #                                                               len(train_loader)))
-            # end_time = datetime.datetime.now()
-            # delta = (end_time - start_time)
-            # print(delta)
+
+            end_time = datetime.datetime.now()
+            delta = (end_time - start_time)
+            print(delta)
 
         loss_list.append(running_loss)
         if epoch % freq == 0:
