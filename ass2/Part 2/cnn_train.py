@@ -19,9 +19,10 @@ BATCH_SIZE_DEFAULT = 32
 MAX_EPOCHS_DEFAULT = 15
 EVAL_FREQ_DEFAULT = 1
 DATA_DIR_DEFAULT = './data'
-OPTIMIZER_DEFAULT = 'ADAM'
+OPTIMIZER_DEFAULT = 'RPROP'
 
 FLAGS = None
+
 
 def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, test_loader):
     """
@@ -36,31 +37,30 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     elif optimizer_name == 'SGD':
         optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+    elif optimizer_name == 'RPROP':
+        optimizer = torch.optim.Rprop(model.parameters(), lr=learning_rate)
     else:
         return
-    # elif optimizer_name == :
-    #     optimize = torch.optim.
     # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     train_acc_list, test_acc_list, loss_list = [], [], []
     for epoch in range(epoch_num):
         running_loss = 0
+        start_time = datetime.datetime.now()
         for i, data in enumerate(train_loader):
-            start_time = datetime.datetime.now()
             inputs, labels = data
-            optimizer.zero_grad()
 
+            optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
             running_loss += loss.item() / len(train_loader)
 
-            end_time = datetime.datetime.now()
-            delta = (end_time - start_time)
-            print(delta)
-
-        loss_list.append(running_loss)
+        end_time = datetime.datetime.now()
+        delta = (end_time - start_time)
+        print(delta)
+        # loss_list.append(running_loss)
         if epoch % freq == 0:
             # 测试模型
             with torch.no_grad():
