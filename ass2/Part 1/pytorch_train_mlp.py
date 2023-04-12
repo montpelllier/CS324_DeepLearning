@@ -31,9 +31,8 @@ def accuracy(predictions, targets):
     Returns:
         accuracy: scalar float, the accuracy of predictions.
     """
-    _, one_hot = torch.max(predictions.data, 1)
-    one_hot = nn.functional.one_hot(one_hot)
-    acc = (one_hot == targets).all(dim=1).float().mean()
+    _, predictions = torch.max(predictions.data, 1)
+    acc = (predictions == targets).float().mean()
     return acc
 
 
@@ -53,6 +52,7 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
         y = train_y
 
         outputs = module(x)
+        # pytorch的交叉熵要求target输入为类别值而非独热码，详见https://pytorch.org/docs/stable/generated/torch.nn.functional.cross_entropy.html
         loss = module.criterion(outputs, y)
         # update paras
         loss.backward()
@@ -60,17 +60,18 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
         optimizer.zero_grad()
 
         if t % freq == 0:
-            train_acc = accuracy(module(train_x), train_y)
-            test_acc = accuracy(module(test_x), test_y)
-            print(
-                "In round {}, the loss is {}, the test accuracy is {:.6f}, and the train accuracy is {:.6f}.".format(t,
-                                                                                                                     loss,
-                                                                                                                     test_acc,
-                                                                                                                     train_acc))
-
-            train_acc_list.append(train_acc)
-            test_acc_list.append(test_acc)
-            loss_list.append(float(loss))
+            with torch.no_grad():
+                train_acc = accuracy(module(train_x), train_y)
+                test_acc = accuracy(module(test_x), test_y)
+                print(
+                    "In round {}, the loss is {}, the test accuracy is {:.6f}, and the train accuracy is {:.6f}.".format(
+                        t,
+                        loss,
+                        test_acc,
+                        train_acc))
+                train_acc_list.append(train_acc)
+                test_acc_list.append(test_acc)
+                loss_list.append(float(loss))
 
     plt.figure()
     plt.title("Pytorch MLP Accuracy")
@@ -103,8 +104,8 @@ def main():
     X, y = torch.tensor(X).float(), torch.tensor(y)
     # split into train set and test set
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-    y_train = nn.functional.one_hot(y_train, num_classes=2).float()
-    y_test = nn.functional.one_hot(y_test, num_classes=2).float()
+    # y_train = nn.functional.one_hot(y_train, num_classes=2).float()
+    # y_test = nn.functional.one_hot(y_test, num_classes=2).float()
     # train
     train(max_step, dim_hidden, freq, lr, sgd, (X_train, y_train), (X_test, y_test))
 
