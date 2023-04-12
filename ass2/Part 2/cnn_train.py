@@ -16,8 +16,8 @@ import cnn_model
 # Default constants
 LEARNING_RATE_DEFAULT = 1e-4
 BATCH_SIZE_DEFAULT = 32
-MAX_EPOCHS_DEFAULT = 50
-EVAL_FREQ_DEFAULT = 10
+MAX_EPOCHS_DEFAULT = 5000
+EVAL_FREQ_DEFAULT = 500
 DATA_DIR_DEFAULT = './data'
 OPTIMIZER_DEFAULT = 'ADAM'
 
@@ -52,7 +52,6 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
         optimizer = torch.optim.Rprop(model.parameters(), lr=learning_rate)
     else:
         return
-    # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     train_acc_list, test_acc_list, loss_list = [], [], []
 
@@ -114,6 +113,12 @@ def main():
     batch_size = args.batch_size
     data_dir = args.data_dir
 
+    if torch.cuda.is_available():
+        device = torch.device("cuda")  # GPU可用时使用GPU
+        print('Using GPU:', torch.cuda.get_device_name(0))
+    else:
+        device = torch.device("cpu")  # GPU不可用时使用CPU
+        print('Using CPU')
     # load and transform the dataset.
     transform = transforms.Compose(
         [transforms.ToTensor(),
@@ -129,7 +134,9 @@ def main():
                                               shuffle=False, num_workers=2)
 
     print("start training")
+    t = datetime.datetime.now()
     train(max_step, optimizer, lr, train_loader, freq, test_loader)
+    print("cost total:", datetime.datetime.now() - t)
 
 
 if __name__ == '__main__':
