@@ -31,8 +31,6 @@ class CNN(nn.Module):
         self.bn7 = nn.BatchNorm2d(512)
         self.bn8 = nn.BatchNorm2d(512)
         self.bn_list = [self.bn1, self.bn2, self.bn3, self.bn4, self.bn5, self.bn6, self.bn7, self.bn8]
-        # self.bn_list = [nn.BatchNorm2d(64), nn.BatchNorm2d(128), nn.BatchNorm2d(256), nn.BatchNorm2d(256),
-        #                 nn.BatchNorm2d(512), nn.BatchNorm2d(512), nn.BatchNorm2d(512), nn.BatchNorm2d(512)]
         # Relu Layer
         self.relu = nn.ReLU()
         # Convolution Layer
@@ -46,14 +44,6 @@ class CNN(nn.Module):
         self.conv8 = nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1)
         self.conv_list = [self.conv1, self.conv2, self.conv3, self.conv4, self.conv5, self.conv6, self.conv7,
                           self.conv8]
-        # self.conv_list = [nn.Conv2d(in_channels=n_channels, out_channels=64, kernel_size=3, stride=1, padding=1),
-        #                   nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1),
-        #                   nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1),
-        #                   nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, padding=1),
-        #                   nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=1, padding=1),
-        #                   nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1),
-        #                   nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1),
-        #                   nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1)]
         # Linear Layer
         self.linear = nn.Linear(512, n_classes)
 
@@ -68,10 +58,7 @@ class CNN(nn.Module):
         """
         # conv -> ReLU -> pool
         for i, (conv, bn) in enumerate(zip(self.conv_list, self.bn_list)):
-            x = conv(x)
-            x = bn(x)
-            x = self.relu(x)
-            # x = self.relu(bn(conv(x)))
+            x = self.relu(bn(conv(x)))
             if i in self.pool_pos:
                 x = self.pool(x)
         # Resize x
@@ -95,7 +82,7 @@ class CNN1(nn.Module):
 
         # Convolution Layer：input_channels = 3, output_channels = 6, kernal_size = 5 * 5
         self.conv1 = nn.Conv2d(n_channels, 6, 5)
-        # Pooling Layer: kernal_size = 2 * 2
+        # Pooling Layer: kernel_size = 2 * 2
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
         # Linear Layer: in_features = 400, out_features = 120

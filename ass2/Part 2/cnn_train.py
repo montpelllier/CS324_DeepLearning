@@ -50,11 +50,6 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
         device = torch.device("cpu")
 
     model = cnn_model.CNN(3, 10).to(device)
-    # model = model.to(device)
-    # for name, param in model.named_parameters():
-    #     if param.requires_grad:
-    #         print(name, param.data.type())
-    #         param.data = param.data.to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer_name = optimizer_name.upper()
 
@@ -81,7 +76,7 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
             loss.backward()
             optimizer.step()
 
-            loss_list.append(loss)
+            loss_list.append(loss.cpu().item())
             # print("epoch", epoch)
             if epoch % freq == 0:
                 # 测试模型
@@ -136,13 +131,12 @@ def main():
     train_set = torchvision.datasets.CIFAR10(root=data_dir, train=True,
                                              download=True, transform=transform)
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size,
-                                               shuffle=True, num_workers=2)
+                                               shuffle=True, num_workers=0)
     test_set = torchvision.datasets.CIFAR10(root=data_dir, train=False,
                                             download=True, transform=transform)
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size,
-                                              shuffle=False, num_workers=2)
+                                              shuffle=False, num_workers=0)
 
-    print("start training")
     t = datetime.datetime.now()
     train(max_step, optimizer, lr, train_loader, freq, test_loader)
     print("cost total:", datetime.datetime.now() - t)
