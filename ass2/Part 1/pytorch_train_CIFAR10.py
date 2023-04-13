@@ -13,9 +13,9 @@ from pytorch_mlp import MLP
 
 # Default constants
 DNN_HIDDEN_UNITS_DEFAULT = '512, 256, 128'
-LEARNING_RATE_DEFAULT = 1e-3
-MAX_EPOCHS_DEFAULT = 1000
-EVAL_FREQ_DEFAULT = 100
+LEARNING_RATE_DEFAULT = 1e-2
+MAX_EPOCHS_DEFAULT = 5000
+EVAL_FREQ_DEFAULT = 200
 BATCH_DEFAULT = 4
 
 FLAGS = None
@@ -56,6 +56,11 @@ def train(epoch, hidden_list, freq, lr, train_loader, test_loader):
     while flag:
         for data in train_loader:
             e += 1
+            # if e > 1500:
+            #     optimizer = torch.optim.SGD(model.parameters(), lr/10)
+            # else:
+            #     optimizer = torch.optim.SGD(model.parameters(), lr, momentum=0.9)
+
             inputs, labels = data
             inputs, labels = inputs.to(device), labels.to(device)
 
