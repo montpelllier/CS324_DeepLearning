@@ -3,87 +3,93 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import datetime
 
-import numpy as np
 import torch
 from matplotlib import pyplot as plt
-from sklearn.datasets import make_moons
-from sklearn.model_selection import train_test_split
-from torch import nn
 from torchvision import transforms, datasets
 
 from pytorch_mlp import MLP
 
 # Default constants
-DNN_HIDDEN_UNITS_DEFAULT = '512, 256'
-LEARNING_RATE_DEFAULT = 1e-2
-MAX_EPOCHS_DEFAULT = 1500
-EVAL_FREQ_DEFAULT = 10
+DNN_HIDDEN_UNITS_DEFAULT = '512, 256, 128'
+LEARNING_RATE_DEFAULT = 1e-3
+MAX_EPOCHS_DEFAULT = 1000
+EVAL_FREQ_DEFAULT = 100
+BATCH_DEFAULT = 4
 
 FLAGS = None
 
 
-def accuracy(predictions, targets):
-    """
-    Computes the prediction accuracy, i.e., the average of correct predictions
-    of the network.
-    Args:
-        predictions: 2D float array of size [number_of_data_samples, n_classes]
-        labels: 2D int array of size [number_of_data_samples, n_classes] with one-hot encoding of ground-truth labels
-    Returns:
-        accuracy: scalar float, the accuracy of predictions.
-    """
-    _, one_hot = torch.max(predictions.data, 1)
-    one_hot = nn.functional.one_hot(one_hot)
-    acc = (one_hot == targets).all(dim=1).float().mean()
-    return acc
+def get_acc(model, data_loader, device):
+    with torch.no_grad():
+        correct, total = 0, 0
+        for images, labels in data_loader:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+    return correct / total
 
 
-def train(epoch, hidden_list, freq, lr, sgd, train_loader, test_loader):
+def train(epoch, hidden_list, freq, lr, train_loader, test_loader):
     """
     Performs training and evaluation of MLP model.
-    NOTE: You should the model on the whole test set each eval_freq iterations.
     """
-    # train_x, train_y = train_set
-    # test_x, test_y = test_set
+    # use GPU if available
+    if torch.cuda.is_available():
+        print("using GPU", torch.cuda.get_device_name(0))
+        device = torch.device("cuda")
+    else:
+        print("using CPU")
+        device = torch.device("cpu")
+
     train_acc_list, test_acc_list, loss_list = [], [], []
-    model = MLP(32*32*3, hidden_list, 10)
-    optimizer = torch.optim.SGD(model.parameters(), lr)
-    # torch.optim.
+
+    model = MLP(32 * 32 * 3, hidden_list, 10).to(device)
+    optimizer = torch.optim.SGD(model.parameters(), lr, momentum=0.9)
+    # optimizer = torch.optim.Adam(model.parameters(), lr)
     # start training
-    for t in range(epoch):
-        for i, data in enumerate(trainloader, 0):
+    e = 0
+    flag = True
+    while flag:
+        for data in train_loader:
+            e += 1
             inputs, labels = data
+            inputs, labels = inputs.to(device), labels.to(device)
+
             optimizer.zero_grad()
             outputs = model(inputs)
             loss = model.criterion(outputs, labels)
             loss.backward()
             optimizer.step()
-        x = train_x
-        y = train_y
 
-        outputs = model(x)
-        loss = model.criterion(outputs, y)
-        loss.backward()
-        optimizer.step()
-
-        if t % freq == 0:
-            train_acc = accuracy(model(train_x), train_y)
-            test_acc = accuracy(model(test_x), test_y)
-            print("In round {}, the loss is {}, the test accuracy is {}, and the train accuracy is {}.".format(t, loss,
-                                                                                                               test_acc,
-                                                                                                               train_acc))
-
-            train_acc_list.append(train_acc)
-            test_acc_list.append(test_acc)
             loss_list.append(float(loss))
+            if e % freq == 0:
+                train_acc = get_acc(model, train_loader, device)
+                test_acc = get_acc(model, test_loader, device)
+                print("In round {}, Loss={}, Test Acc={:.4f} %, Train Acc={:.4f} %.".format(e,
+                                                                                            loss,
+                                                                                            test_acc * 100,
+                                                                                            train_acc * 100))
+                train_acc_list.append(train_acc)
+                test_acc_list.append(test_acc)
+
+            if e == epoch:
+                print("finish training")
+                flag = False
+                break
 
     plt.figure()
+    plt.title("Pytorch MLP Accuracy")
     plt.plot(train_acc_list, label="train accuracy")
     plt.plot(test_acc_list, label="test accuracy")
     plt.ylabel("accuracy")
     plt.legend()
+
     plt.figure()
+    plt.title("Pytorch MLP Loss")
     plt.plot(loss_list, 'b-')
     plt.ylabel("loss function")
     plt.show()
@@ -99,26 +105,27 @@ def main():
     freq = args.eval_freq
     lr = args.learning_rate
     max_step = args.max_steps
-    # sgd = args.sgd
-    sgd = False
+    batch_size = args.batch_size
     # generate dataset
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
 
-    trainset = datasets.CIFAR10(root='./data', train=True,
-                                download=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64,
-                                              shuffle=True, num_workers=2)
+    train_set = datasets.CIFAR10(root='./data', train=True,
+                                 download=True, transform=transform)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size,
+                                               shuffle=True, num_workers=0)
 
-    testset = datasets.CIFAR10(root='./data', train=False,
-                               download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=64,
-                                             shuffle=False, num_workers=2)
+    test_set = datasets.CIFAR10(root='./data', train=False,
+                                download=True, transform=transform)
+    test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size,
+                                              shuffle=False, num_workers=0)
 
     # train
-    train(max_step, dim_hidden, freq, lr, sgd, trainloader, testloader)
+    t = datetime.datetime.now()
+    train(max_step, dim_hidden, freq, lr, train_loader, test_loader)
+    print("cost total:", datetime.datetime.now() - t)
 
 
 if __name__ == '__main__':
@@ -132,5 +139,6 @@ if __name__ == '__main__':
                         help='Number of epochs to run trainer.')
     parser.add_argument('--eval_freq', type=int, default=EVAL_FREQ_DEFAULT,
                         help='Frequency of evaluation on the test set')
+    parser.add_argument('--batch_size', type=int, default=BATCH_DEFAULT, help='Batch size')
     FLAGS, unparsed = parser.parse_known_args()
     main()

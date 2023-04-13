@@ -93,10 +93,10 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
                                                                                                    loss,
                                                                                                    test_acc * 100,
                                                                                                    train_acc * 100))
-                if epoch == epoch_num:
-                    print("finish training")
-                    flag = False
-                    break
+            if epoch == epoch_num:
+                print("finish training")
+                flag = False
+                break
 
     # draw curve of acc and loss
     plt.figure()
