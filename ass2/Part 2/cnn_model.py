@@ -69,6 +69,7 @@ class CNN(nn.Module):
         return out
 
 
+# A smaller net for testing
 class CNN1(nn.Module):
     def __init__(self, n_channels, n_classes):
         """
@@ -80,7 +81,7 @@ class CNN1(nn.Module):
         """
         super(CNN1, self).__init__()
 
-        # Convolution Layer：input_channels = 3, output_channels = 6, kernal_size = 5 * 5
+        # Convolution Layer：input_channels = 3, output_channels = 6, kernel_size = 5 * 5
         self.conv1 = nn.Conv2d(n_channels, 6, 5)
         # Pooling Layer: kernel_size = 2 * 2
         self.pool = nn.MaxPool2d(2, 2)

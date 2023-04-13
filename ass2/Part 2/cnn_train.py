@@ -41,7 +41,7 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
     Performs training and evaluation of MLP model.
     NOTE: You should the model on the whole test set each eval_freq iterations.
     """
-    # YOUR TRAINING CODE GOES HERE
+    # use GPU if available
     if torch.cuda.is_available():
         print("using GPU", torch.cuda.get_device_name(0))
         device = torch.device("cuda")
@@ -53,6 +53,7 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
     criterion = nn.CrossEntropyLoss()
     optimizer_name = optimizer_name.upper()
 
+    # chose optimizer
     print("try to use optimizer", optimizer_name)
     if optimizer_name == 'ADAM':
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -61,7 +62,7 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
     elif optimizer_name == 'RPROP':
         optimizer = torch.optim.Rprop(model.parameters(), lr=learning_rate)
     else:
-        print("unsupported optimizer", optimizer_name)
+        print("unsupported optimizer!")
         raise RuntimeError()
 
     train_acc_list, test_acc_list, loss_list = [], [], []
@@ -81,7 +82,7 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
             loss_list.append(loss.cpu().item())
 
             if epoch % freq == 0:
-                # 测试模型
+                # test model
                 test_acc = get_acc(model, test_loader, device)
                 test_acc_list.append(test_acc)
                 train_acc = get_acc(model, train_loader, device)
@@ -97,6 +98,7 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
                     flag = False
                     break
 
+    # draw curve of acc and loss
     plt.figure()
     plt.title("Pytorch CNN Accuracy with " + optimizer_name)
     plt.plot(train_acc_list, label="train accuracy")
