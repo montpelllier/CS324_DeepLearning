@@ -39,13 +39,13 @@ def accuracy(predictions, targets):
     return acc
 
 
-def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
+def train(epoch, hidden_list, freq, lr, sgd, train_loader, test_loader):
     """
     Performs training and evaluation of MLP model.
     NOTE: You should the model on the whole test set each eval_freq iterations.
     """
-    train_x, train_y = train_set
-    test_x, test_y = test_set
+    # train_x, train_y = train_set
+    # test_x, test_y = test_set
     train_acc_list, test_acc_list, loss_list = [], [], []
     model = MLP(32*32*3, hidden_list, 10)
     optimizer = torch.optim.SGD(model.parameters(), lr)
