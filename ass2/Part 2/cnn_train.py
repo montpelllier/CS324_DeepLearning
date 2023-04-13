@@ -53,6 +53,7 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
     criterion = nn.CrossEntropyLoss()
     optimizer_name = optimizer_name.upper()
 
+    print("try to use optimizer", optimizer_name)
     if optimizer_name == 'ADAM':
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     elif optimizer_name == 'SGD':
@@ -60,7 +61,8 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
     elif optimizer_name == 'RPROP':
         optimizer = torch.optim.Rprop(model.parameters(), lr=learning_rate)
     else:
-        return
+        print("unsupported optimizer", optimizer_name)
+        raise RuntimeError()
 
     train_acc_list, test_acc_list, loss_list = [], [], []
 
