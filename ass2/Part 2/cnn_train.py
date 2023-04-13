@@ -67,21 +67,19 @@ def train(epoch_num: int, optimizer_name, learning_rate, train_loader, freq, tes
     epoch = 0
     flag = True
     while flag:
-        for X, y in train_loader:
+        for feature, label in train_loader:
             epoch += 1
-            X, y = X.to(device), y.to(device)
+            feature, label = feature.to(device), label.to(device)
             optimizer.zero_grad()
-            outputs = model(X)
-            loss = criterion(outputs, y)
+            outputs = model(feature)
+            loss = criterion(outputs, label)
             loss.backward()
             optimizer.step()
 
             loss_list.append(loss.cpu().item())
-            # print("epoch", epoch)
+
             if epoch % freq == 0:
                 # 测试模型
-                print("testing model")
-                # print(len(test_loader)+len(train_loader))
                 test_acc = get_acc(model, test_loader, device)
                 test_acc_list.append(test_acc)
                 train_acc = get_acc(model, train_loader, device)
