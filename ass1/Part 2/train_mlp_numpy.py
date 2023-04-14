@@ -6,14 +6,15 @@ import argparse
 
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.datasets import make_moons
+from sklearn.datasets import make_circles
+from sklearn.model_selection import train_test_split
 
 import modules
 from mlp_numpy import MLP
 
 # Default constants
 DNN_HIDDEN_UNITS_DEFAULT = '20'
-LEARNING_RATE_DEFAULT = 1e-2
+LEARNING_RATE_DEFAULT = 3e-1
 MAX_EPOCHS_DEFAULT = 1500
 EVAL_FREQ_DEFAULT = 10
 SGD_DEFAULT = False
@@ -46,7 +47,7 @@ def accuracy(predictions, labels):
     return correct / len(predictions)
 
 
-def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
+def train(epoch, in_size, hidden_list, out_size, freq, lr, sgd, train_set, test_set):
     """
     Performs training and evaluation of MLP model.
     NOTE: You should the model on the whole test set each eval_freq iterations.
@@ -54,7 +55,7 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
     train_x, train_y = train_set
     test_x, test_y = test_set
     train_acc_list, test_acc_list, loss_list = [], [], []
-    module = MLP(2, hidden_list, 2)
+    module = MLP(in_size, hidden_list, out_size)
 
     # start training
     for t in range(epoch):
@@ -67,7 +68,10 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
             y = train_y
 
         pred = module(x)
+        # print("pred", pred)
+        # print("y", y)
         grad = module.loss_fc.backward(pred, y)
+
         module.backward(grad)
 
         if t % freq == 0:
@@ -107,17 +111,18 @@ def main():
     sgd = args.sgd
     # generate dataset
     size = 1000
-    data, label = make_moons(n_samples=size, noise=0.05)
+    # data, label = make_moons(n_samples=size, noise=0.05)
+    data, label = make_circles(n_samples=size, noise=0.04, factor=0.7)
+    # data, label = make_blobs(n_samples=size, n_features=16, centers=6)
+    n_in, n_out = len(data[0]), max(label) + 1
     # split into train set and test set
-    bound = int(0.8 * size)
-    train_data, test_data = data[:bound], data[bound:]
-    train_label, test_label = oneHot(label[:bound]), oneHot(label[bound:])
-    train_data, test_data = np.array(train_data), np.array(test_data)
+    X_train, X_test, y_train, y_test = train_test_split(data, label, test_size=0.2, random_state=0)
+    y_train, y_test = oneHot(y_train), oneHot(y_test)
     # draw
-    # plt.scatter(data[:, 0], data[:, 1], s=10, c=label)
-    # plt.show()
+    plt.scatter(data[:, 0], data[:, 1], s=10, c=label)
+    plt.show()
     # train
-    train(max_step, dim_hidden, freq, lr, sgd, (train_data, train_label), (test_data, test_label))
+    train(max_step, n_in, dim_hidden, n_out, freq, lr, sgd, (X_train, y_train), (X_test, y_test))
 
 
 if __name__ == '__main__':

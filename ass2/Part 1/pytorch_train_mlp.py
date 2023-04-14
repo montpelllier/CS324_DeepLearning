@@ -6,17 +6,17 @@ import argparse
 
 import torch
 from matplotlib import pyplot as plt
-from sklearn.datasets import make_moons
+from sklearn.datasets import *
 from sklearn.model_selection import train_test_split
-from torch import nn
 
 from pytorch_mlp import MLP
 
 # Default constants
 DNN_HIDDEN_UNITS_DEFAULT = '20'
-LEARNING_RATE_DEFAULT = 1e-2
+LEARNING_RATE_DEFAULT = 3e-1
 MAX_EPOCHS_DEFAULT = 1500
-EVAL_FREQ_DEFAULT = 10
+EVAL_FREQ_DEFAULT = 20
+DATASET_DEFAULT = 2
 
 FLAGS = None
 
@@ -36,7 +36,7 @@ def accuracy(predictions, targets):
     return acc
 
 
-def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
+def train(epoch, in_size, hidden_list, out_size, freq, lr, sgd, train_set, test_set):
     """
     Performs training and evaluation of MLP model.
     NOTE: You should the model on the whole test set each eval_freq iterations.
@@ -44,22 +44,25 @@ def train(epoch, hidden_list, freq, lr, sgd, train_set, test_set):
     train_x, train_y = train_set
     test_x, test_y = test_set
     train_acc_list, test_acc_list, loss_list = [], [], []
-    module = MLP(2, hidden_list, 2)
+    module = MLP(in_size, hidden_list, out_size)
     optimizer = torch.optim.SGD(module.parameters(), lr)
 
     for t in range(epoch):
         x = train_x
         y = train_y
 
+        optimizer.zero_grad()
         outputs = module(x)
         # pytorch的交叉熵要求target输入为类别值而非独热码，详见https://pytorch.org/docs/stable/generated/torch.nn.functional.cross_entropy.html
-        loss = module.criterion(outputs, y)
+        loss = module.criterion(outputs, y.long())
         # update paras
         loss.backward()
         optimizer.step()
-        optimizer.zero_grad()
 
         if t % freq == 0:
+            for param in module.parameters():
+                print("p", param)
+                print("g", param.grad)
             with torch.no_grad():
                 train_acc = accuracy(module(train_x), train_y)
                 test_acc = accuracy(module(test_x), test_y)
@@ -98,16 +101,34 @@ def main():
     max_step = args.max_steps
     # sgd = args.sgd
     sgd = False
+    dataset = args.dataset
     # generate dataset
-    size = 1000
-    X, y = make_moons(n_samples=size, noise=0.05)
+    size = 2000
+
+    if dataset == 1:
+        X, y = make_moons(n_samples=size, noise=0.05)
+    elif dataset == 2:
+        X, y = make_circles(n_samples=size, noise=0.04, factor=0.7)
+    elif dataset == 3:
+        X, y = make_blobs(n_samples=size, n_features=20, centers=6)
+
+    n_in, n_out = len(X[0]), max(y) + 1
+
     X, y = torch.tensor(X).float(), torch.tensor(y)
     # split into train set and test set
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-    # y_train = nn.functional.one_hot(y_train, num_classes=2).float()
-    # y_test = nn.functional.one_hot(y_test, num_classes=2).float()
+
+    # draw
+    plt.figure()
+    plt.scatter(X_train[:, 0], X_train[:, 1], s=10, c=y_train)
+    plt.title("Train set")
+
+    plt.figure()
+    plt.scatter(X_test[:, 0], X_test[:, 1], s=10, c=y_test)
+    plt.title("Test set")
+    plt.show()
     # train
-    train(max_step, dim_hidden, freq, lr, sgd, (X_train, y_train), (X_test, y_test))
+    train(max_step, n_in, dim_hidden, n_out, freq, lr, sgd, (X_train, y_train), (X_test, y_test))
 
 
 if __name__ == '__main__':
@@ -120,6 +141,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_steps', type=int, default=MAX_EPOCHS_DEFAULT,
                         help='Number of epochs to run trainer.')
     parser.add_argument('--eval_freq', type=int, default=EVAL_FREQ_DEFAULT,
-                        help='Frequency of evaluation on the test set')
+                        help='Frequency of evaluation on the test set.')
+    parser.add_argument('--dataset', type=int, default=DATASET_DEFAULT, help='Set dataset.')
     FLAGS, unparsed = parser.parse_known_args()
     main()

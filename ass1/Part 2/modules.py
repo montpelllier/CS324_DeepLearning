@@ -48,7 +48,7 @@ class Linear(object):
         self.grads['weight'] and self.grads['bias'].
         """
         self.grads['weight'] = np.dot(self.x.transpose(), dout)
-        self.grads['bias'] = np.mean(dout, axis=0)
+        self.grads['bias'] = np.sum(dout, axis=0)
         dx = np.dot(dout, self.params['weight'].transpose())
         return dx
 
@@ -110,8 +110,6 @@ class SoftMax(object):
             x[i] -= max(x[i])
             x[i] = np.exp(x[i])
             x[i] /= sum(x[i])
-        if flag:
-            self.x = x
         out = x
         return out
 
@@ -123,6 +121,7 @@ class SoftMax(object):
         Returns:
             dx: gradients with respect to the input_data of the module
         """
+        # result in the loss backward
         return dout
 
     __call__ = forward
@@ -139,7 +138,7 @@ class CrossEntropy(object):
         Returns:
             out: cross entropy loss
         """
-        x += 1e-7
+        x += 1e-8
         out = -np.mean(y * np.log(x))
         return out
 
@@ -153,7 +152,10 @@ class CrossEntropy(object):
             dx: gradient of the loss with respect to the input_data x.
         """
         # softmax+交叉熵的求导
+        x += 1e-8
         dx = x - y
+        # 除去batch size，使求得的梯度为均值
+        dx /= len(x)
         return dx
 
     __call__ = forward
