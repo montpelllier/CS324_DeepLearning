@@ -60,9 +60,6 @@ def train(epoch, in_size, hidden_list, out_size, freq, lr, sgd, train_set, test_
         optimizer.step()
 
         if t % freq == 0:
-            for param in module.parameters():
-                print("p", param)
-                print("g", param.grad)
             with torch.no_grad():
                 train_acc = accuracy(module(train_x), train_y)
                 test_acc = accuracy(module(test_x), test_y)

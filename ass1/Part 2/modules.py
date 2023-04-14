@@ -93,8 +93,6 @@ class ReLU(object):
 
 
 class SoftMax(object):
-    def __init__(self):
-        self.x = None
 
     def forward(self, x, flag=True):
         """

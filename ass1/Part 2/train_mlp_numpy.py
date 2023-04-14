@@ -6,7 +6,7 @@ import argparse
 
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.datasets import make_circles
+from sklearn.datasets import *
 from sklearn.model_selection import train_test_split
 
 import modules
@@ -14,7 +14,7 @@ from mlp_numpy import MLP
 
 # Default constants
 DNN_HIDDEN_UNITS_DEFAULT = '20'
-LEARNING_RATE_DEFAULT = 3e-1
+LEARNING_RATE_DEFAULT = 10
 MAX_EPOCHS_DEFAULT = 1500
 EVAL_FREQ_DEFAULT = 10
 SGD_DEFAULT = False
@@ -40,7 +40,6 @@ def accuracy(predictions, labels):
         accuracy: scalar float, the accuracy of predictions.
     """
     correct = 0
-    # print(predictions)
     for i, pred in enumerate(predictions):
         if np.argmax(pred) == np.argmax(labels[i]):
             correct += 1
@@ -68,10 +67,7 @@ def train(epoch, in_size, hidden_list, out_size, freq, lr, sgd, train_set, test_
             y = train_y
 
         pred = module(x)
-        # print("pred", pred)
-        # print("y", y)
         grad = module.loss_fc.backward(pred, y)
-
         module.backward(grad)
 
         if t % freq == 0:
