@@ -100,7 +100,7 @@ def main():
     sgd = False
     dataset = args.dataset
     # generate dataset
-    size = 2000
+    size = 1000
 
     if dataset == 1:
         X, y = make_moons(n_samples=size, noise=0.05)

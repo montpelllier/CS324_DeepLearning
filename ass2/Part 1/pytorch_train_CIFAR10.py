@@ -17,6 +17,7 @@ LEARNING_RATE_DEFAULT = 1e-2
 MAX_EPOCHS_DEFAULT = 5000
 EVAL_FREQ_DEFAULT = 200
 BATCH_DEFAULT = 4
+OPTIMIZER_DEFAULT = 1
 
 FLAGS = None
 
@@ -33,7 +34,7 @@ def get_acc(model, data_loader, device):
     return correct / total
 
 
-def train(epoch, hidden_list, freq, lr, train_loader, test_loader):
+def train(optim, epoch, hidden_list, freq, lr, train_loader, test_loader):
     """
     Performs training and evaluation of MLP model.
     """
@@ -48,19 +49,16 @@ def train(epoch, hidden_list, freq, lr, train_loader, test_loader):
     train_acc_list, test_acc_list, loss_list = [], [], []
 
     model = MLP(32 * 32 * 3, hidden_list, 10).to(device)
-    optimizer = torch.optim.SGD(model.parameters(), lr, momentum=0.9)
-    # optimizer = torch.optim.Adam(model.parameters(), lr)
+    if optim == 1:
+        optimizer = torch.optim.SGD(model.parameters(), lr, momentum=0.9)
+    elif optim == 2:
+        optimizer = torch.optim.Adam(model.parameters(), lr)
     # start training
     e = 0
     flag = True
     while flag:
         for data in train_loader:
             e += 1
-            # if e > 1500:
-            #     optimizer = torch.optim.SGD(model.parameters(), lr/10)
-            # else:
-            #     optimizer = torch.optim.SGD(model.parameters(), lr, momentum=0.9)
-
             inputs, labels = data
             inputs, labels = inputs.to(device), labels.to(device)
 
@@ -111,6 +109,7 @@ def main():
     lr = args.learning_rate
     max_step = args.max_steps
     batch_size = args.batch_size
+    optimizer = args.optimizer
     # generate dataset
     transform = transforms.Compose([
         transforms.ToTensor(),
@@ -129,7 +128,7 @@ def main():
 
     # train
     t = datetime.datetime.now()
-    train(max_step, dim_hidden, freq, lr, train_loader, test_loader)
+    train(optimizer, max_step, dim_hidden, freq, lr, train_loader, test_loader)
     print("cost total:", datetime.datetime.now() - t)
 
 
@@ -145,5 +144,6 @@ if __name__ == '__main__':
     parser.add_argument('--eval_freq', type=int, default=EVAL_FREQ_DEFAULT,
                         help='Frequency of evaluation on the test set')
     parser.add_argument('--batch_size', type=int, default=BATCH_DEFAULT, help='Batch size')
+    parser.add_argument('--optimizer', type=int, default=OPTIMIZER_DEFAULT, help='Optmizer')
     FLAGS, unparsed = parser.parse_known_args()
     main()
