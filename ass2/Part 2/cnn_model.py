@@ -58,8 +58,10 @@ class CNN(nn.Module):
         """
         # conv -> ReLU -> pool
         for i, (conv, bn) in enumerate(zip(self.conv_list, self.bn_list)):
+            print(x.size())
             x = self.relu(bn(conv(x)))
             if i in self.pool_pos:
+                print(x.size())
                 x = self.pool(x)
         # Resize x
         x = x.view(-1, 512)

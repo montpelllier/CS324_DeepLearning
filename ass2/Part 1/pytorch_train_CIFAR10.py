@@ -144,6 +144,6 @@ if __name__ == '__main__':
     parser.add_argument('--eval_freq', type=int, default=EVAL_FREQ_DEFAULT,
                         help='Frequency of evaluation on the test set')
     parser.add_argument('--batch_size', type=int, default=BATCH_DEFAULT, help='Batch size')
-    parser.add_argument('--optimizer', type=int, default=OPTIMIZER_DEFAULT, help='Optmizer')
+    parser.add_argument('--optimizer', type=int, default=OPTIMIZER_DEFAULT, help='Optimizer')
     FLAGS, unparsed = parser.parse_known_args()
     main()
