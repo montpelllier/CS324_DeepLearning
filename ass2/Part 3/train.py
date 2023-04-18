@@ -5,8 +5,9 @@ from __future__ import print_function
 import argparse
 
 import numpy as np
-from torch.utils.data import DataLoader
 from matplotlib import pyplot as plt
+from torch.utils.data import DataLoader
+
 from dataset import PalindromeDataset
 from vanilla_rnn import *
 
@@ -48,21 +49,23 @@ def train(config):
         acc_list.append(accuracy)
 
         if step % 10 == 0:
-            print(step, accuracy, loss)
+            print(
+                'Epoch [{}/{}], Loss: {:.4f}, Accuracy: {:.4f} %.'.format(step,
+                                                                          config.train_steps,
+                                                                          loss,
+                                                                          accuracy * 100))
 
         if step == config.train_steps:
-            # If you receive a PyTorch data-loader error, check this bug report:
-            # https://github.com/pytorch/pytorch/pull/9655
             break
 
     print('Done training.')
     # draw curve of acc and loss
     plt.figure()
     plt.title("Pytorch CNN Accuracy")
-    plt.plot(acc_list, label="train accuracy")
-    # plt.plot(test_acc_list, label="test accuracy")
+    plt.plot(acc_list, label="accuracy")
     plt.ylabel("accuracy")
     plt.legend()
+
     plt.figure()
     plt.title("Pytorch CNN Loss")
     plt.plot(loss_list, 'b-')
@@ -75,7 +78,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # Model params
-    parser.add_argument('--input_length', type=int, default=5, help='Length of an input sequence')
+    parser.add_argument('--input_length', type=int, default=10, help='Length of an input sequence')
     parser.add_argument('--input_dim', type=int, default=1, help='Dimensionality of input sequence')
     parser.add_argument('--num_classes', type=int, default=10, help='Dimensionality of output sequence')
     parser.add_argument('--num_hidden', type=int, default=128, help='Number of hidden units in the model')

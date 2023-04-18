@@ -26,14 +26,12 @@ class VanillaRNN(nn.Module):
         nn.init.xavier_uniform_(self.W_yh)
         nn.init.zeros_(self.b_h)
         nn.init.zeros_(self.b_y)
-        print(self.W_hx.is_cuda)
-        print(self.b_y.is_cuda)
 
     def forward(self, x):
-        # h_t = torch.zeros(self.hidden_dim, self.batch_size)  # initialize hidden
-        nn.init.zeros_(self.h)
+        nn.init.zeros_(self.h)  # initialize
         h_t = self.h
         y = None
+
         for t in range(self.seq_length):
             x_t = x[:, t].view(1, -1)
             h_t = torch.tanh(self.W_hx @ x_t + self.W_hh @ h_t + self.b_h)  # calculate hidden state
