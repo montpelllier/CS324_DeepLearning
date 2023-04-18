@@ -36,5 +36,5 @@ class VanillaRNN(nn.Module):
             x_t = x[:, t].view(1, -1)
             h_t = torch.tanh(self.W_hx @ x_t + self.W_hh @ h_t + self.b_h)  # calculate hidden state
             o_t = self.W_ph @ h_t + self.b_o  # calculate output
-        y = torch.softmax(o_t.T, dim=1)
+        y = torch.softmax(o_t.T, dim=-1)
         return y

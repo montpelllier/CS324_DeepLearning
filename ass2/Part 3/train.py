@@ -61,13 +61,13 @@ def train(config):
     print('Done training.')
     # draw curve of acc and loss
     plt.figure()
-    plt.title("Pytorch CNN Accuracy")
+    plt.title("Pytorch RNN Accuracy")
     plt.plot(acc_list, label="accuracy")
     plt.ylabel("accuracy")
     plt.legend()
 
     plt.figure()
-    plt.title("Pytorch CNN Loss")
+    plt.title("Pytorch RNN Loss")
     plt.plot(loss_list, 'b-')
     plt.ylabel("loss function")
     plt.show()
