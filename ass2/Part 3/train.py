@@ -13,7 +13,7 @@ from vanilla_rnn import *
 
 def train(config):
     # Initialize the model that we are going to use
-    model = VanillaRNN(seq_length=5, input_dim=config.input_dim, hidden_dim=config.num_hidden,
+    model = VanillaRNN(seq_length=config.input_length, input_dim=config.input_dim, hidden_dim=config.num_hidden,
                        output_dim=config.num_classes, batch_size=config.batch_size)
 
     # Initialize the dataset and data loader (leave the +1)
@@ -25,23 +25,26 @@ def train(config):
     optimizer = torch.optim.RMSprop(model.parameters(), lr=config.learning_rate)  # fixme
 
     for step, (batch_inputs, batch_targets) in enumerate(data_loader):
-        print(batch_inputs)
-        print(batch_targets)
+        # print(batch_inputs)
+        # print(batch_targets)
         # Add more code here ...
         optimizer.zero_grad()
         output = model.forward(batch_inputs)
         loss = criterion(output, batch_targets)
         loss.backward()
         # the following line is to deal with exploding gradients
-        torch.nn.utils.clip_grad_norm(model.parameters(), max_norm=config.max_norm)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=config.max_norm)
         optimizer.step()
         # Add more code here ...
-        print(loss)
-        # loss = np.inf  # fixme
-        accuracy = 0.0  # fixme
+        # print(output)
+        loss = loss.item()  # fixme
+        acc_in = np.argmax(output.cpu().detach().numpy(), axis=1) == batch_targets.cpu().detach().numpy()
+        accuracy = np.sum(acc_in) / batch_targets.shape[0]
+        # accuracy = 0.0  # fixme
+        # print(accuracy)
 
         if step % 10 == 0:
-            pass
+            print(step, accuracy, loss)
         # print acuracy/loss here
 
         if step == config.train_steps:
