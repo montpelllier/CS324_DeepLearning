@@ -29,7 +29,7 @@ class PalindromeDataset(data.Dataset):
 
     def generate_palindrome(self):
         # Generates a single, random palindrome number of 'length' digits.
-        left = [np.random.randint(0, 10) for _ in range(math.ceil(self.seq_length/2))]
+        left = [np.random.randint(0, 10) for _ in range(math.ceil(self.seq_length / 2))]
         left = np.asarray(left, dtype=np.float32)
         right = np.flip(left, 0) if self.seq_length % 2 == 0 else np.flip(left[:-1], 0)
         return np.concatenate((left, right))

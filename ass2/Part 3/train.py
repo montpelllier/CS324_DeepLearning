@@ -3,42 +3,46 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
-import time
-import numpy as np
 
-import torch
+import numpy as np
 from torch.utils.data import DataLoader
 
 from dataset import PalindromeDataset
-from vanilla_rnn import VanillaRNN
+from vanilla_rnn import *
+
 
 def train(config):
-
     # Initialize the model that we are going to use
-    model = None  # fixme
+    model = VanillaRNN(seq_length=5, input_dim=config.input_dim, hidden_dim=config.num_hidden,
+                       output_dim=config.num_classes, batch_size=config.batch_size)
 
     # Initialize the dataset and data loader (leave the +1)
-    dataset = PalindromeDataset(config.input_length+1)
+    dataset = PalindromeDataset(config.input_length + 1)
     data_loader = DataLoader(dataset, config.batch_size, num_workers=1)
 
     # Setup the loss and optimizer
-    criterion = None  # fixme
-    optimizer = None  # fixme
+    criterion = nn.CrossEntropyLoss()  # fixme
+    optimizer = torch.optim.RMSprop(model.parameters(), lr=config.learning_rate)  # fixme
 
     for step, (batch_inputs, batch_targets) in enumerate(data_loader):
-
+        print(batch_inputs)
+        print(batch_targets)
         # Add more code here ...
-
+        optimizer.zero_grad()
+        output = model.forward(batch_inputs)
+        loss = criterion(output, batch_targets)
+        loss.backward()
         # the following line is to deal with exploding gradients
         torch.nn.utils.clip_grad_norm(model.parameters(), max_norm=config.max_norm)
-
+        optimizer.step()
         # Add more code here ...
-
-        loss = np.inf   # fixme
+        print(loss)
+        # loss = np.inf  # fixme
         accuracy = 0.0  # fixme
 
         if step % 10 == 0:
-            # print acuracy/loss here
+            pass
+        # print acuracy/loss here
 
         if step == config.train_steps:
             # If you receive a PyTorch data-loader error, check this bug report:
@@ -47,8 +51,8 @@ def train(config):
 
     print('Done training.')
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     # Parse training configuration
     parser = argparse.ArgumentParser()
 
