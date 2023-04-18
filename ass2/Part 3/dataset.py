@@ -15,7 +15,7 @@ class PalindromeDataset(data.Dataset):
         self.seq_length = seq_length
 
     def __len__(self):
-        # Number of possible palindroms can be very big:
+        # Number of possible palindromes can be very big:
         # (10**(seq_length/2) or (10**((seq_length+1)/2)
         # Therefore we return the maximum integer value
         return sys.maxsize
