@@ -6,6 +6,8 @@ import argparse
 
 import numpy as np
 from matplotlib import pyplot as plt
+from torch.optim import RMSprop
+from torch.optim.lr_scheduler import *
 from torch.utils.data import DataLoader
 
 from dataset import PalindromeDataset
@@ -24,7 +26,8 @@ def train(config):
 
     # Set up the loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.RMSprop(model.parameters(), lr=config.learning_rate)
+    optimizer = RMSprop(model.parameters(), lr=config.learning_rate)
+    scheduler = ExponentialLR(optimizer, gamma=0.99)
 
     # Create list to store data
     acc_list = []
@@ -39,7 +42,7 @@ def train(config):
         loss = criterion(output, batch_targets)
         loss.backward()
         # the following line is to deal with exploding gradients
-        # torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=config.max_norm)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=config.max_norm)
         optimizer.step()
 
         loss = loss.item()
@@ -49,6 +52,8 @@ def train(config):
         acc_list.append(accuracy)
 
         if step % 10 == 0:
+            if config.scheduler:
+                scheduler.step()
             print(
                 'Epoch [{}/{}], Loss: {:.4f}, Accuracy: {:.4f} %.'.format(step,
                                                                           config.train_steps,
@@ -86,7 +91,7 @@ if __name__ == "__main__":
     parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate')
     parser.add_argument('--train_steps', type=int, default=10000, help='Number of training steps')
     parser.add_argument('--max_norm', type=float, default=10.0)
-
+    parser.add_argument('--scheduler', type=bool, default=False)
     config = parser.parse_args()
     # Train the model
     train(config)
