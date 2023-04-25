@@ -4,8 +4,8 @@ import os
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
-from torchvision.utils import save_image
 from torchvision import datasets
+
 
 class Generator(nn.Module):
     def __init__(self):

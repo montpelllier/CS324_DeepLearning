@@ -1,13 +1,12 @@
-import os
 import errno
+import os
 
 import numpy as np
 import torch
 import torch.utils.data as data
-from torchvision.datasets.utils import download_url
 import torchvision.transforms as transforms
 from PIL import Image
-
+from torchvision.datasets.utils import download_url
 
 BMNIST_BASE_URL = "http://www.cs.toronto.edu/~larocheh/public/datasets/" \
                   "binarized_mnist/binarized_mnist_{}.amat"
@@ -66,7 +65,7 @@ class BMNIST(data.Dataset):
         val_path = os.path.join(processed_folder, self.val_file)
         test_path = os.path.join(processed_folder, self.test_file)
         return os.path.exists(train_path) and os.path.exists(val_path) and \
-            os.path.exists(test_path)
+               os.path.exists(test_path)
 
     def _read_raw_image_file(self, path):
 
@@ -132,7 +131,6 @@ class BMNIST(data.Dataset):
 
 
 def bmnist(root='./data/', batch_size=128, download=True):
-
     data_transforms = transforms.Compose([transforms.ToTensor()])
 
     train_set = BMNIST(root, 'train', data_transforms, download)
