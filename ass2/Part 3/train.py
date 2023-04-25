@@ -39,7 +39,7 @@ def train(config):
         loss = criterion(output, batch_targets)
         loss.backward()
         # the following line is to deal with exploding gradients
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=config.max_norm)
+        # torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=config.max_norm)
         optimizer.step()
 
         loss = loss.item()
