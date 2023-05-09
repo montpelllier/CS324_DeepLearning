@@ -18,7 +18,7 @@ def train(config):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # Initialize the model that we are going to use
     model = LSTM(seq_length=config.input_length, input_dim=config.input_dim, hidden_dim=config.num_hidden,
-                 output_dim=config.num_classes, batch_size=config.batch_size)
+                 output_dim=config.num_classes, batch_size=config.batch_size, device=device)
 
     # Initialize the dataset and data loader (leave the +1)
     dataset = PalindromeDataset(config.input_length + 1)
@@ -43,16 +43,15 @@ def train(config):
         loss.backward()
 
         # the following line is to deal with exploding gradients
-        torch.nn.utils.clip_grad_norm(model.parameters(), max_norm=config.max_norm)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=config.max_norm)
         optimizer.step()
 
-        loss = loss.item()
-        acc_in = np.argmax(output.cpu().detach().numpy(), axis=1) == batch_targets.cpu().detach().numpy()
-        accuracy = np.sum(acc_in) / batch_targets.shape[0]
-        loss_list.append(loss)
-        acc_list.append(accuracy)
-
         if step % 10 == 0:
+            loss = loss.item()
+            acc_in = np.argmax(output.cpu().detach().numpy(), axis=1) == batch_targets.cpu().detach().numpy()
+            accuracy = np.sum(acc_in) / batch_targets.shape[0]
+            loss_list.append(loss)
+            acc_list.append(accuracy)
             print(
                 'Epoch [{}/{}], Loss: {:.4f}, Accuracy: {:.4f} %.'.format(step,
                                                                           config.train_steps,
