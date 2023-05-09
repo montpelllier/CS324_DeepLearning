@@ -6,6 +6,7 @@ import argparse
 
 import numpy as np
 from matplotlib import pyplot as plt
+from torch.nn import CrossEntropyLoss
 from torch.optim import RMSprop
 from torch.optim.lr_scheduler import *
 from torch.utils.data import DataLoader
@@ -25,7 +26,7 @@ def train(config):
     data_loader = DataLoader(dataset, config.batch_size, num_workers=1)
 
     # Set up the loss and optimizer
-    criterion = nn.CrossEntropyLoss()
+    criterion = CrossEntropyLoss()
     optimizer = RMSprop(model.parameters(), lr=config.learning_rate)
     scheduler = ExponentialLR(optimizer, gamma=0.99)
 

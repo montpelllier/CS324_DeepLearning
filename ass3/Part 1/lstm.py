@@ -6,13 +6,11 @@ import torch
 import torch.nn as nn
 
 
-################################################################################
-
 class LSTM(nn.Module):
 
-    def __init__(self, seq_length, input_dim, hidden_dim, output_dim, batch_size):
+    def __init__(self, seq_length, input_dim, hidden_dim, output_dim, batch_size, device):
         super(LSTM, self).__init__()
-        # Initialization here ...
+        # Initialization all parameters
         self.num_hidden = hidden_dim
         self.batch_size = batch_size
         self.seq_length = seq_length
@@ -38,19 +36,19 @@ class LSTM(nn.Module):
 
     def forward(self, x):
         # Implementation here ...
-        h_tmin1 = torch.zeros(self.num_hidden, self.batch_size)
-        c_tmin1 = torch.zeros(self.num_hidden, self.batch_size)
+        h_t = torch.zeros(self.num_hidden, self.batch_size)
+        c_t = torch.zeros(self.num_hidden, self.batch_size)
 
         for t in range(self.seq_length):
-            g = torch.tanh(self.W_gx @ x[:, t].view(1, -1) + self.W_gh @ h_tmin1 + self.bias_g)
-            i = nn.functional.sigmoid(self.W_ix @ x[:, t].view(1, -1) + self.W_ih @ h_tmin1 + self.bias_i)
-            f = nn.functional.sigmoid(self.W_fx @ x[:, t].view(1, -1) + self.W_fh @ h_tmin1 + self.bias_f)
-            o = nn.functional.sigmoid(self.W_ox @ x[:, t].view(1, -1) + self.W_oh @ h_tmin1 + self.bias_o)
-            c = g * i + c_tmin1 * f
+            g = torch.tanh(self.W_gx @ x[:, t].view(1, -1) + self.W_gh @ h_t + self.bias_g)
+            i = nn.functional.sigmoid(self.W_ix @ x[:, t].view(1, -1) + self.W_ih @ h_t + self.bias_i)
+            f = nn.functional.sigmoid(self.W_fx @ x[:, t].view(1, -1) + self.W_fh @ h_t + self.bias_f)
+            o = nn.functional.sigmoid(self.W_ox @ x[:, t].view(1, -1) + self.W_oh @ h_t + self.bias_o)
+            c = g * i + c_t * f
             h = torch.tanh(c) * o
 
-            h_tmin1 = h
-            c_tmin1 = c
+            h_t = h
+            c_t = c
 
         p = (self.W_ph @ h + self.bias_p).transpose(1, 0)
         y = nn.functional.softmax(p)
