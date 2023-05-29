@@ -7,6 +7,7 @@ import torchvision.transforms as transforms
 from matplotlib import pyplot as plt
 from torchvision import datasets
 from torchvision.utils import save_image
+from tqdm import tqdm
 
 
 class Generator(nn.Module):
@@ -59,7 +60,7 @@ class Generator(nn.Module):
 
 
 class Discriminator(nn.Module):
-    def __init__(self,in_channels, base_channel):
+    def __init__(self, in_channels, base_channel):
         super(Discriminator, self).__init__()
 
         # Construct distriminator. You should experiment with your model,
@@ -110,8 +111,9 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D):
     for epoch in range(args.n_epochs):
         weighted_dis_loss = 0
         weighted_gen_loss = 0
-        for i, (imgs, _) in enumerate(dataloader):
-            imgs.to(device)
+        bar = tqdm(dataloader)
+        for i, (imgs, _) in enumerate(bar):
+            imgs = imgs.to(device)
             label_0 = torch.zeros(args.batch_size).to(device)
             label_1 = torch.ones(args.batch_size).to(device)
 
@@ -121,6 +123,9 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D):
             noise = torch.randn((args.batch_size, args.latent_dim)).to(device)
             noise = noise.view(args.batch_size, args.latent_dim, 1, 1)
             fake_image = generator(noise)
+            # fake_image = fake_image.to(device)
+            # print("fake_image.device:", fake_image.device)
+            # print("discriminator.parameters().device:", next(discriminator.parameters()).device)
             prediction_on_fake = discriminator(fake_image)
             gen_loss = criterion(prediction_on_fake, label_1)
             gen_loss.backward()
@@ -142,7 +147,6 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D):
             # weighted loss of generator and discriminator
             weighted_gen_loss = weighted_gen_loss * (i / (i + 1.)) + gen_loss * (1. / (i + 1.))
             weighted_dis_loss = weighted_dis_loss * (i / (i + 1.)) + loss * (1. / (i + 1.))
-            batches_done = epoch * len(dataloader) + i
             # Save Images
             # -----------
             batches_done = epoch * len(dataloader) + i
@@ -184,8 +188,9 @@ def main():
         datasets.MNIST('./data/mnist', train=True, download=True,
                        transform=transforms.Compose([
                            transforms.ToTensor(),
-                           transforms.Normalize((0.5, 0.5, 0.5),
-                                                (0.5, 0.5, 0.5))])),
+                           # grey graph, not RGB
+                           transforms.Normalize((0.5,),
+                                                (0.5,))])),
         batch_size=args.batch_size, shuffle=True)
 
     # Initialize models and optimizers
