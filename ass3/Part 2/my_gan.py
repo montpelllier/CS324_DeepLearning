@@ -35,26 +35,27 @@ def train(dataloader, discriminator, generator, optimizer_g, optimizer_d):
 
     for epoch in range(args.n_epochs):
         bar = tqdm(dataloader)
-        for i, (imgs, _) in enumerate(bar):
+        for i, (images, _) in enumerate(bar):
+            # 梯度置零
             optimizer_g.zero_grad()
             optimizer_d.zero_grad()
 
-            real_imgs = imgs.cuda()
-            real_labels = torch.ones(imgs.shape[0], dtype=torch.float, device=device)
-            fake_labels = torch.zeros(imgs.shape[0], dtype=torch.float, device=device)
+            real_images = images.cuda()
+            real_labels = torch.ones(images.shape[0], dtype=torch.float, device=device)
+            artificial_labels = torch.zeros(images.shape[0], dtype=torch.float, device=device)
             # Train Generator
-            z = torch.FloatTensor(np.random.normal(0, 1, (imgs.shape[0], args.latent_dim))).to(device)
-            fake_imgs = generator(z)
-            fake_scores = discriminator(fake_imgs)
+            z = torch.FloatTensor(np.random.normal(0, 1, (images.shape[0], args.latent_dim))).to(device)
+            fake_images = generator(z)
+            artificial_scores = discriminator(fake_images)
 
-            g_loss = criterion(fake_scores, real_labels)
+            g_loss = criterion(artificial_scores, real_labels)
             g_loss.backward()
             optimizer_g.step()
             # Train Discriminator
-            fake_scores = discriminator(fake_imgs.detach())
-            real_scores = discriminator(real_imgs)
+            artificial_scores = discriminator(fake_images.detach())
+            real_scores = discriminator(real_images)
 
-            d_loss_fake = criterion(fake_scores, fake_labels)
+            d_loss_fake = criterion(artificial_scores, artificial_labels)
             d_loss_real = criterion(real_scores, real_labels)
             d_loss = (d_loss_fake + d_loss_real) / 2
             d_loss.backward()
@@ -62,32 +63,31 @@ def train(dataloader, discriminator, generator, optimizer_g, optimizer_d):
             # Save Images
             batches_done = epoch * len(dataloader) + i
 
-            print("Epoch: {}/{} | G_Loss: {:.4f} | D_Loss {:.4f} | D(x): {:.2f} | D(G(z)): {:.2f}|".format(epoch,
-                                                                                                           args.n_epochs,
-                                                                                                           g_loss,
-                                                                                                           d_loss,
-                                                                                                           real_scores.data.mean(),
-                                                                                                           fake_scores.data.mean()))
+            print("Epoch: {}/{}, G_Loss: {:.4f}, D_Loss {:.4f}".format(epoch,
+                                                                       args.n_epochs,
+                                                                       g_loss,
+                                                                       d_loss,
+                                                                       ))
 
             if batches_done % args.save_interval == 0:
                 # You can use the function save_image(Tensor (shape Bx1x28x28), filename, number of rows, normalize)
                 # to save the generated images, e.g.:
-                save_image(fake_imgs.unsqueeze(1)[:25], 'samples_gan/{}.png'.format(batches_done), nrow=5,
+                save_image(fake_images.unsqueeze(1)[:25], 'gan_images/{}.png'.format(batches_done), nrow=5,
                            normalize=True)
 
-        if epoch % 10 == 0:
-            generator.eval()
-            for i in range(len(interpolation_samples)):
-                z = interpolation_samples[i]
-                imgs = generator(z)
-                save_image(imgs.unsqueeze(1), 'interpolations_gan/epoch{}_n{}.png'.format(epoch, i), nrow=9,
-                           normalize=True)
-            generator.train()
+        # if epoch % 10 == 0:
+        #     generator.eval()
+        #     for i in range(len(interpolation_samples)):
+        #         z = interpolation_samples[i]
+        #         images = generator(z)
+        #         save_image(images.unsqueeze(1), 'interpolations_gan/epoch{}_n{}.png'.format(epoch, i), nrow=9,
+        #                    normalize=True)
+        #     generator.train()
 
 
 def main():
     # Create output image directory
-    os.makedirs('samples_gan', exist_ok=True)
+    os.makedirs('gan_images', exist_ok=True)
     os.makedirs('interpolations_gan', exist_ok=True)
 
     # load data
@@ -107,14 +107,10 @@ def main():
     optimizer_generator = torch.optim.Adam(generator.parameters(), lr=args.lr)
     optimizer_discriminator = torch.optim.Adam(discriminator.parameters(), lr=args.lr)
 
-    # checkpoint = torch.load("mnist_generator1.pt")
-    # generator.load_state_dict(checkpoint)
-
     # Start training
     train(dataloader, discriminator, generator, optimizer_generator, optimizer_discriminator)
 
-    # You can save your generator here to re-use it to generate images for your
-    # report, e.g.:
+    # You can save your generator here to re-use it to generate images for your report, e.g.:
     torch.save(generator.state_dict(), "mnist_generator.pt")
 
 
