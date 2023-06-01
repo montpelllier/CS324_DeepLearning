@@ -31,8 +31,8 @@ class LSTM(Module):
         self.W_ph = Parameter(torch.randn((output_dim, hidden_dim)).to(device), requires_grad=True)
         self.b_p = Parameter(torch.zeros((output_dim, 1)).to(device), requires_grad=True)
 
-        self.h = torch.zeros(self.num_hidden, batch_size).to(device)
-        self.c = torch.zeros(self.num_hidden, batch_size).to(device)
+        self.h = torch.zeros(hidden_dim, batch_size).to(device)
+        self.c = torch.zeros(hidden_dim, batch_size).to(device)
 
     def forward(self, x):
         # initialize
