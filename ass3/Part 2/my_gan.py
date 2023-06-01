@@ -13,76 +13,52 @@ from models import *
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-def interpolations(n_samples=20):
-    samples = []
-    for _ in range(n_samples):
-        z1 = torch.FloatTensor(np.random.normal(0, 1, args.latent_dim)).to(device)
-        z2 = torch.FloatTensor(np.random.normal(0, 1, args.latent_dim)).to(device)
-        z = torch.empty(args.latent_dim, 9).to(device)
-
-        for i in range(args.latent_dim):
-            r = torch.linspace(z1[i], z2[i], 9)
-            z[i] = r
-        z.transpose_(0, 1)
-        samples.append(z)
-
-    return samples
-
-
 def train(dataloader, discriminator, generator, optimizer_g, optimizer_d):
     criterion = torch.nn.BCELoss()
-    interpolation_samples = interpolations(n_samples=100)
 
     for epoch in range(args.n_epochs):
         bar = tqdm(dataloader)
-        for i, (images, _) in enumerate(bar):
+        g_loss, d_loss = None, None
+        for i, (real_images, _) in enumerate(bar):
+            real_images = real_images.to(device)
+            size = real_images.shape[0]
             # 梯度置零
             optimizer_g.zero_grad()
             optimizer_d.zero_grad()
-
-            real_images = images.cuda()
-            real_labels = torch.ones(images.shape[0], dtype=torch.float, device=device)
-            artificial_labels = torch.zeros(images.shape[0], dtype=torch.float, device=device)
+            # create labels
+            real_labels = torch.ones(size, dtype=torch.float, device=device)
+            artificial_labels = torch.zeros(size, dtype=torch.float, device=device)
             # Train Generator
-            z = torch.FloatTensor(np.random.normal(0, 1, (images.shape[0], args.latent_dim))).to(device)
-            fake_images = generator(z)
-            artificial_scores = discriminator(fake_images)
+            z = torch.FloatTensor(np.random.normal(0, 1, (size, args.latent_dim))).to(device)
+            artificial_images = generator(z)
+            artificial_scores = discriminator(artificial_images)
 
             g_loss = criterion(artificial_scores, real_labels)
             g_loss.backward()
             optimizer_g.step()
             # Train Discriminator
-            artificial_scores = discriminator(fake_images.detach())
+            artificial_scores = discriminator(artificial_images.detach())
             real_scores = discriminator(real_images)
 
-            d_loss_fake = criterion(artificial_scores, artificial_labels)
+            d_loss_artificial = criterion(artificial_scores, artificial_labels)
             d_loss_real = criterion(real_scores, real_labels)
-            d_loss = (d_loss_fake + d_loss_real) / 2
+            d_loss = (d_loss_artificial + d_loss_real) / 2
             d_loss.backward()
             optimizer_d.step()
+
             # Save Images
             batches_done = epoch * len(dataloader) + i
-
-            print("Epoch: {}/{}, G_Loss: {:.4f}, D_Loss {:.4f}".format(epoch,
-                                                                       args.n_epochs,
-                                                                       g_loss,
-                                                                       d_loss,
-                                                                       ))
-
             if batches_done % args.save_interval == 0:
                 # You can use the function save_image(Tensor (shape Bx1x28x28), filename, number of rows, normalize)
                 # to save the generated images, e.g.:
-                save_image(fake_images.unsqueeze(1)[:25], 'gan_images/{}.png'.format(batches_done), nrow=5,
+                save_image(artificial_images.unsqueeze(1)[:25], 'gan_images/{}.png'.format(batches_done), nrow=5,
                            normalize=True)
-
-        # if epoch % 10 == 0:
-        #     generator.eval()
-        #     for i in range(len(interpolation_samples)):
-        #         z = interpolation_samples[i]
-        #         images = generator(z)
-        #         save_image(images.unsqueeze(1), 'interpolations_gan/epoch{}_n{}.png'.format(epoch, i), nrow=9,
-        #                    normalize=True)
-        #     generator.train()
+        # print info
+        print("Epoch: {}/{}, G_Loss: {:.4f}, D_Loss {:.4f}".format(epoch,
+                                                                   args.n_epochs,
+                                                                   g_loss,
+                                                                   d_loss,
+                                                                   ))
 
 
 def main():
@@ -90,8 +66,7 @@ def main():
     os.makedirs('gan_images', exist_ok=True)
     os.makedirs('interpolations_gan', exist_ok=True)
 
-    # load data
-    # Normalize中参数设为(0.5,)，因为MNIST数据集为灰度图而非RGB，故为一维数据
+    # load data, Normalize中参数设为(0.5,)，因为MNIST数据集为灰度图而非RGB，故为一维数据
     dataloader = torch.utils.data.DataLoader(
         datasets.MNIST('./data/mnist', train=True, download=True,
                        transform=transforms.Compose([
