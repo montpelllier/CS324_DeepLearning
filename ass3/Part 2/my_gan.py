@@ -64,7 +64,6 @@ def train(dataloader, discriminator, generator, optimizer_g, optimizer_d):
 def main():
     # Create output image directory
     os.makedirs('gan_images', exist_ok=True)
-    os.makedirs('interpolations_gan', exist_ok=True)
 
     # load data, Normalize中参数设为(0.5,)，因为MNIST数据集为灰度图而非RGB，故为一维数据
     dataloader = torch.utils.data.DataLoader(
